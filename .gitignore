@@ -3,21 +3,24 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
-*.egg-info/
 
 # Virtual environments
 .venv/
 venv/
 
-# Tooling
+# Tool caches
 .ruff_cache/
+.mypy_cache/
 .pytest_cache/
 
-# OS / editor
+# OpenCode runtime state (ephemeral)
+.opencode*
+.opencodeignore
+
+# Private dev tooling (local only)
+AGENTS.md
+RESUME.md
+
+# OS / editor junk
 .DS_Store
 Thumbs.db
-.vscode/
-.idea/
-
-# Local workspace state
-workspace/memory/
