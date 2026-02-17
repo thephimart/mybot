@@ -66,7 +66,7 @@ If you’re looking for feature checklists, this project is not for you.
 mybot intentionally includes only:
 
 - Agent loop (LLM ↔ tools)
-- Tool execution
+- Tool execution (including web, image, video, news, and book search)
 - Persistent memory
 - Scheduling / cron
 - Minimal channels:
@@ -76,6 +76,24 @@ mybot intentionally includes only:
 - CLI for local operation
 
 Nothing else is considered “core”.
+
+---
+
+## Gateway model (important)
+
+mybot does **not** expose an HTTP API by default.
+
+The “gateway” is a **channel-driven runtime**, not a REST server. It coordinates:
+- the agent loop
+- scheduling / cron
+- memory
+- enabled I/O channels (CLI, Telegram, Email)
+
+If no channel binds an external interface, no network port will be open.
+This is intentional.
+
+An HTTP ingress (e.g. `/message → agent loop`) may be added later as a new channel,
+but it is **not part of the core**.
 
 ---
 
@@ -113,6 +131,22 @@ Those choices belong to you.
 
 ---
 
+## Local LLMs
+
+Local models (e.g. llama.cpp, Ollama, LM Studio) are supported via the `custom` provider.
+
+Routing is determined by the configured `apiBase`.
+If the endpoint does not require an API key, any non-empty value may be used.
+
+Model name handling depends on the backend:
+- some local runtimes ignore it
+- others (e.g. Ollama) use it for routing
+
+This allows mybot to work with any OpenAI-compatible local or remote endpoint
+without special casing.
+
+---
+
 ## Line count
 
 mybot is intentionally small.
@@ -128,7 +162,7 @@ mybot began as a **heavily reduced refactor** of the open-source project **nanob
 * Original project: [https://github.com/HKUDS/nanobot](https://github.com/HKUDS/nanobot)
 * License: MIT (retained)
 
-All remaining code has been reshaped, removed, or rewritten to serve a different goal:
+The codebase has been reshaped, reduced, or rewritten to serve a different goal:
 a stripped-down, fork-first Python bot core.
 
 ---

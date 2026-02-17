@@ -1,13 +1,14 @@
-"""Web tools: web_search and web_fetch."""
+"""Web tools: web_search, image_search, video_search, news_search, books_search, web_fetch."""
 
+import asyncio
 import html
 import json
-import os
 import re
 from typing import Any
 from urllib.parse import urlparse
 
 import httpx
+from ddgs import DDGS
 
 from mybot.agent.tools.base import Tool
 
@@ -44,52 +45,207 @@ def _validate_url(url: str) -> tuple[bool, str]:
 
 
 class WebSearchTool(Tool):
-    """Search the web using Brave Search API."""
+    """Search the web using DDGS text search."""
 
     name = "web_search"
-    description = "Search the web. Returns titles, URLs, and snippets."
+    description = "Search the web for text results. Returns titles, URLs, and snippets."
     parameters = {
         "type": "object",
         "properties": {
             "query": {"type": "string", "description": "Search query"},
-            "count": {
-                "type": "integer",
-                "description": "Results (1-10)",
-                "minimum": 1,
-                "maximum": 10,
-            },
+            "count": {"type": "integer", "description": "Max results (1-10)", "minimum": 1, "maximum": 10},
+            "region": {"type": "string", "description": "Region (us-en, uk-en, ru-ru, etc.)"},
+            "safesearch": {"type": "string", "enum": ["on", "moderate", "off"], "default": "moderate"},
+            "timelimit": {"type": "string", "description": "Time limit (d, w, m, y)"},
         },
         "required": ["query"],
     }
 
-    def __init__(self, api_key: str | None = None, max_results: int = 5):
-        self.api_key = api_key or os.environ.get("BRAVE_API_KEY", "")
+    def __init__(self, max_results: int = 5):
         self.max_results = max_results
 
     async def execute(self, query: str, count: int | None = None, **kwargs: Any) -> str:
-        if not self.api_key:
-            return "Error: BRAVE_API_KEY not configured"
-
         try:
-            n = min(max(count or self.max_results, 1), 10)
-            async with httpx.AsyncClient() as client:
-                r = await client.get(
-                    "https://api.search.brave.com/res/v1/web/search",
-                    params={"q": query, "count": n},
-                    headers={"Accept": "application/json", "X-Subscription-Token": self.api_key},
-                    timeout=10.0,
-                )
-                r.raise_for_status()
-
-            results = r.json().get("web", {}).get("results", [])
+            n = min(count or self.max_results, 10)
+            results = await asyncio.to_thread(
+                lambda: DDGS().text(query, max_results=n, **{k: v for k, v in kwargs.items() if v})
+            )
             if not results:
                 return f"No results for: {query}"
 
-            lines = [f"Results for: {query}\n"]
+            lines = [f"Web results for: {query}\n"]
+            for i, item in enumerate(results[:n], 1):
+                lines.append(f"{i}. {item.get('title', '')}\n   {item.get('href', '')}")
+                if body := item.get("body"):
+                    lines.append(f"   {body}")
+            return "\n".join(lines)
+        except Exception as e:
+            return f"Error: {e}"
+
+
+class ImageSearchTool(Tool):
+    """Search for images using DDGS."""
+
+    name = "image_search"
+    description = "Search for images. Returns image URLs, thumbnails, and sources."
+    parameters = {
+        "type": "object",
+        "properties": {
+            "query": {"type": "string", "description": "Image search query"},
+            "count": {"type": "integer", "description": "Max results (1-10)", "minimum": 1, "maximum": 10},
+            "region": {"type": "string", "default": "us-en"},
+            "safesearch": {"type": "string", "enum": ["on", "moderate", "off"], "default": "moderate"},
+            "size": {"type": "string", "enum": ["Small", "Medium", "Large", "Wallpaper"]},
+            "color": {"type": "string"},
+            "type_image": {"type": "string", "enum": ["photo", "clipart", "gif", "transparent", "line"]},
+        },
+        "required": ["query"],
+    }
+
+    def __init__(self, max_results: int = 5):
+        self.max_results = max_results
+
+    async def execute(self, query: str, count: int | None = None, **kwargs: Any) -> str:
+        try:
+            n = min(count or self.max_results, 10)
+            results = await asyncio.to_thread(
+                lambda: DDGS().images(query, max_results=n, **{k: v for k, v in kwargs.items() if v})
+            )
+            if not results:
+                return f"No image results for: {query}"
+
+            lines = [f"Image results for: {query}\n"]
             for i, item in enumerate(results[:n], 1):
                 lines.append(f"{i}. {item.get('title', '')}\n   {item.get('url', '')}")
-                if desc := item.get("description"):
-                    lines.append(f"   {desc}")
+                lines.append(f"   Thumbnail: {item.get('thumbnail', '')}")
+                lines.append(f"   Source: {item.get('source', '')}")
+            return "\n".join(lines)
+        except Exception as e:
+            return f"Error: {e}"
+
+
+class VideoSearchTool(Tool):
+    """Search for videos using DDGS."""
+
+    name = "video_search"
+    description = "Search for videos. Returns video URLs, descriptions, and duration."
+    parameters = {
+        "type": "object",
+        "properties": {
+            "query": {"type": "string", "description": "Video search query"},
+            "count": {"type": "integer", "description": "Max results (1-10)", "minimum": 1, "maximum": 10},
+            "region": {"type": "string", "default": "us-en"},
+            "safesearch": {"type": "string", "enum": ["on", "moderate", "off"], "default": "moderate"},
+            "timelimit": {"type": "string", "enum": ["d", "w", "m"]},
+            "resolution": {"type": "string", "enum": ["high", "standard"]},
+            "duration": {"type": "string", "enum": ["short", "medium", "long"]},
+        },
+        "required": ["query"],
+    }
+
+    def __init__(self, max_results: int = 5):
+        self.max_results = max_results
+
+    async def execute(self, query: str, count: int | None = None, **kwargs: Any) -> str:
+        try:
+            n = min(count or self.max_results, 10)
+            results = await asyncio.to_thread(
+                lambda: DDGS().videos(query, max_results=n, **{k: v for k, v in kwargs.items() if v})
+            )
+            if not results:
+                return f"No video results for: {query}"
+
+            lines = [f"Video results for: {query}\n"]
+            for i, item in enumerate(results[:n], 1):
+                lines.append(f"{i}. {item.get('title', '')}\n   {item.get('content', '')}")
+                if dur := item.get("duration"):
+                    lines.append(f"   Duration: {dur}")
+                if pub := item.get("publisher"):
+                    lines.append(f"   Publisher: {pub}")
+                if url := item.get("content"):
+                    lines.append(f"   URL: {url}")
+            return "\n".join(lines)
+        except Exception as e:
+            return f"Error: {e}"
+
+
+class NewsSearchTool(Tool):
+    """Search for news using DDGS."""
+
+    name = "news_search"
+    description = "Search for news articles. Returns titles, URLs, sources, and dates."
+    parameters = {
+        "type": "object",
+        "properties": {
+            "query": {"type": "string", "description": "News search query"},
+            "count": {"type": "integer", "description": "Max results (1-10)", "minimum": 1, "maximum": 10},
+            "region": {"type": "string", "default": "us-en"},
+            "safesearch": {"type": "string", "enum": ["on", "moderate", "off"], "default": "moderate"},
+            "timelimit": {"type": "string", "enum": ["d", "w", "m"]},
+        },
+        "required": ["query"],
+    }
+
+    def __init__(self, max_results: int = 5):
+        self.max_results = max_results
+
+    async def execute(self, query: str, count: int | None = None, **kwargs: Any) -> str:
+        try:
+            n = min(count or self.max_results, 10)
+            results = await asyncio.to_thread(
+                lambda: DDGS().news(query, max_results=n, **{k: v for k, v in kwargs.items() if v})
+            )
+            if not results:
+                return f"No news results for: {query}"
+
+            lines = [f"News results for: {query}\n"]
+            for i, item in enumerate(results[:n], 1):
+                lines.append(f"{i}. {item.get('title', '')}\n   {item.get('url', '')}")
+                if date := item.get("date"):
+                    lines.append(f"   Date: {date}")
+                if body := item.get("body"):
+                    lines.append(f"   {body}")
+            return "\n".join(lines)
+        except Exception as e:
+            return f"Error: {e}"
+
+
+class BooksSearchTool(Tool):
+    """Search for books using DDGS."""
+
+    name = "books_search"
+    description = "Search for books. Returns titles, authors, publishers, and download links."
+    parameters = {
+        "type": "object",
+        "properties": {
+            "query": {"type": "string", "description": "Book search query"},
+            "count": {"type": "integer", "description": "Max results (1-10)", "minimum": 1, "maximum": 10},
+        },
+        "required": ["query"],
+    }
+
+    def __init__(self, max_results: int = 5):
+        self.max_results = max_results
+
+    async def execute(self, query: str, count: int | None = None, **kwargs: Any) -> str:
+        try:
+            n = min(count or self.max_results, 10)
+            results = await asyncio.to_thread(
+                lambda: DDGS().books(query, max_results=n)
+            )
+            if not results:
+                return f"No book results for: {query}"
+
+            lines = [f"Book results for: {query}\n"]
+            for i, item in enumerate(results[:n], 1):
+                lines.append(f"{i}. {item.get('title', '')}")
+                if author := item.get("author"):
+                    lines.append(f"   Author: {author}")
+                if pub := item.get("publisher"):
+                    lines.append(f"   Publisher: {pub}")
+                if info := item.get("info"):
+                    lines.append(f"   Info: {info}")
+                lines.append(f"   URL: {item.get('url', '')}")
             return "\n".join(lines)
         except Exception as e:
             return f"Error: {e}"

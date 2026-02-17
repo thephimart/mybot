@@ -11,7 +11,14 @@ from loguru import logger
 from mybot.agent.tools.filesystem import EditFileTool, ListDirTool, ReadFileTool, WriteFileTool
 from mybot.agent.tools.registry import ToolRegistry
 from mybot.agent.tools.shell import ExecTool
-from mybot.agent.tools.web import WebFetchTool, WebSearchTool
+from mybot.agent.tools.web import (
+    BooksSearchTool,
+    ImageSearchTool,
+    NewsSearchTool,
+    VideoSearchTool,
+    WebFetchTool,
+    WebSearchTool,
+)
 from mybot.bus.events import InboundMessage
 from mybot.bus.queue import MessageBus
 from mybot.providers.base import LLMProvider
@@ -34,7 +41,6 @@ class SubagentManager:
         model: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 4096,
-        brave_api_key: str | None = None,
         exec_config: "ExecToolConfig | None" = None,
         restrict_to_workspace: bool = False,
     ):
@@ -46,7 +52,6 @@ class SubagentManager:
         self.model = model or provider.get_default_model()
         self.temperature = temperature
         self.max_tokens = max_tokens
-        self.brave_api_key = brave_api_key
         self.exec_config = exec_config or ExecToolConfig()
         self.restrict_to_workspace = restrict_to_workspace
         self._running_tasks: dict[str, asyncio.Task[None]] = {}
@@ -113,7 +118,11 @@ class SubagentManager:
                     restrict_to_workspace=self.restrict_to_workspace,
                 )
             )
-            tools.register(WebSearchTool(api_key=self.brave_api_key))
+            tools.register(WebSearchTool())
+            tools.register(ImageSearchTool())
+            tools.register(VideoSearchTool())
+            tools.register(NewsSearchTool())
+            tools.register(BooksSearchTool())
             tools.register(WebFetchTool())
 
             # Build messages with subagent-specific prompt

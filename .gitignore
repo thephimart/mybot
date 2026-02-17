@@ -13,13 +13,10 @@ venv/
 .mypy_cache/
 .pytest_cache/
 
-# OpenCode runtime state (ephemeral)
+# OpenCode & development
+/dev_tasks.md
 .opencode*
-.opencodeignore
-
-# Private dev tooling (local only)
-AGENTS.md
-RESUME.md
+/AGENTS.md
 
 # OS / editor junk
 .DS_Store

@@ -56,7 +56,7 @@ Example (Linux/macOS):
 chmod 600 ~/.mybot/config.json
 ```
 
-If your fork stores secrets differently, document it clearly.
+If your fork stores secrets differently, document it clearly for anyone who deploys it.
 
 ---
 
@@ -106,6 +106,8 @@ Recommendations:
 * Apply firewall rules if running on a server
 * Monitor outbound traffic
 * Set spending limits on API providers
+
+There is no inbound network access unless you add it
 
 ---
 

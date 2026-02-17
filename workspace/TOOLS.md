@@ -17,7 +17,7 @@ write_file(path: str, content: str) -> str
 ```
 
 ### edit_file
-Edit a file by replacing specific text.
+Edit a file by replacing the specific instance of text.
 ```
 edit_file(path: str, old_text: str, new_text: str) -> str
 ```
@@ -45,12 +45,75 @@ exec(command: str, working_dir: str = None) -> str
 ## Web Access
 
 ### web_search
-Search the web using Brave Search API.
+Search the web using DDGS (DuckDuckGo).
 ```
-web_search(query: str, count: int = 5) -> str
+web_search(query: str, count: int = 5, region: str = "us-en", safesearch: str = "moderate", timelimit: str | None = None) -> str
 ```
+Returns search results with titles, URLs, and snippets. No API key required.
 
-Returns search results with titles, URLs, and snippets. Requires `tools.web.search.apiKey` in config.
+**Parameters:**
+- `query` - Search query (required)
+- `count` - Max results 1-10 (default 5)
+- `region` - Region code: us-en, uk-en, ru-ru, etc. (default us-en)
+- `safesearch` - on, moderate, off (default moderate)
+- `timelimit` - d, w, m, y (optional)
+
+### image_search
+Search for images.
+```
+image_search(query: str, count: int = 5, region: str = "us-en", safesearch: str = "moderate", size: str | None = None, color: str | None = None, type_image: str | None = None) -> str
+```
+Returns image URLs, thumbnails, and sources.
+
+**Parameters:**
+- `query` - Image search query (required)
+- `count` - Max results 1-10 (default 5)
+- `region` - Region code (default us-en)
+- `safesearch` - on, moderate, off (default moderate)
+- `size` - Small, Medium, Large, Wallpaper (optional)
+- `color` - Red, Orange, Yellow, Green, Blue, etc. (optional)
+- `type_image` - photo, clipart, gif, transparent, line (optional)
+
+### video_search
+Search for videos.
+```
+video_search(query: str, count: int = 5, region: str = "us-en", safesearch: str = "moderate", timelimit: str | None = None, resolution: str | None = None, duration: str | None = None) -> str
+```
+Returns video URLs, descriptions, and duration.
+
+**Parameters:**
+- `query` - Video search query (required)
+- `count` - Max results 1-10 (default 5)
+- `region` - Region code (default us-en)
+- `safesearch` - on, moderate, off (default moderate)
+- `timelimit` - d, w, m (optional)
+- `resolution` - high, standard (optional)
+- `duration` - short, medium, long (optional)
+
+### news_search
+Search for news articles.
+```
+news_search(query: str, count: int = 5, region: str = "us-en", safesearch: str = "moderate", timelimit: str | None = None) -> str
+```
+Returns news titles, URLs, sources, and dates.
+
+**Parameters:**
+- `query` - News search query (required)
+- `count` - Max results 1-10 (default 5)
+- `region` - Region code (default us-en)
+- `safesearch` - on, moderate, off (default moderate)
+- `timelimit` - d, w, m (optional)
+
+### books_search
+Search for books.
+```
+books_search(query: str, count: int = 5) -> str
+```
+Returns book titles, authors, publishers, and download links.
+
+**Parameters:**
+- `query` - Book search query (required)
+- `count` - Max results 1-10 (default 5)
 
 ### web_fetch
 Fetch and extract main content from a URL.

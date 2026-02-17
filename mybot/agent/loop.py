@@ -17,7 +17,14 @@ from mybot.agent.tools.message import MessageTool
 from mybot.agent.tools.registry import ToolRegistry
 from mybot.agent.tools.shell import ExecTool
 from mybot.agent.tools.spawn import SpawnTool
-from mybot.agent.tools.web import WebFetchTool, WebSearchTool
+from mybot.agent.tools.web import (
+    BooksSearchTool,
+    ImageSearchTool,
+    NewsSearchTool,
+    VideoSearchTool,
+    WebFetchTool,
+    WebSearchTool,
+)
 from mybot.bus.events import InboundMessage, OutboundMessage
 from mybot.bus.queue import MessageBus
 from mybot.providers.base import LLMProvider
@@ -46,7 +53,6 @@ class AgentLoop:
         temperature: float = 0.7,
         max_tokens: int = 4096,
         memory_window: int = 50,
-        brave_api_key: str | None = None,
         exec_config: "ExecToolConfig | None" = None,
         cron_service: "CronService | None" = None,
         restrict_to_workspace: bool = False,
@@ -63,7 +69,6 @@ class AgentLoop:
         self.temperature = temperature
         self.max_tokens = max_tokens
         self.memory_window = memory_window
-        self.brave_api_key = brave_api_key
         self.exec_config = exec_config or ExecToolConfig()
         self.cron_service = cron_service
         self.restrict_to_workspace = restrict_to_workspace
@@ -78,9 +83,8 @@ class AgentLoop:
             model=self.model,
             temperature=self.temperature,
             max_tokens=self.max_tokens,
-            brave_api_key=brave_api_key,
             exec_config=self.exec_config,
-            restrict_to_workspace=restrict_to_workspace,
+            restrict_to_workspace=self.restrict_to_workspace,
         )
 
         self._running = False
@@ -108,7 +112,11 @@ class AgentLoop:
         )
 
         # Web tools
-        self.tools.register(WebSearchTool(api_key=self.brave_api_key))
+        self.tools.register(WebSearchTool())
+        self.tools.register(ImageSearchTool())
+        self.tools.register(VideoSearchTool())
+        self.tools.register(NewsSearchTool())
+        self.tools.register(BooksSearchTool())
         self.tools.register(WebFetchTool())
 
         # Message tool
@@ -293,7 +301,7 @@ class AgentLoop:
             return OutboundMessage(
                 channel=msg.channel,
                 chat_id=msg.chat_id,
-                content="🐈 mybot commands:\n/new — Start a new conversation\n/help — Show available commands",
+                content="🤖 mybot commands:\n/new — Start a new conversation\n/help — Show available commands",
             )
 
         if len(session.messages) > self.memory_window:

@@ -110,9 +110,27 @@ class GatewayConfig(BaseModel):
 
 
 class WebSearchConfig(BaseModel):
-    """Web search tool configuration."""
+    """Web text search configuration."""
+    max_results: int = 5
 
-    api_key: str = ""  # Brave Search API key
+
+class ImageSearchConfig(BaseModel):
+    """Web image search configuration."""
+    max_results: int = 5
+
+
+class VideoSearchConfig(BaseModel):
+    """Web video search configuration."""
+    max_results: int = 5
+
+
+class NewsSearchConfig(BaseModel):
+    """Web news search configuration."""
+    max_results: int = 5
+
+
+class BooksSearchConfig(BaseModel):
+    """Web books search configuration."""
     max_results: int = 5
 
 
@@ -120,6 +138,10 @@ class WebToolsConfig(BaseModel):
     """Web tools configuration."""
 
     search: WebSearchConfig = Field(default_factory=WebSearchConfig)
+    images: ImageSearchConfig = Field(default_factory=ImageSearchConfig)
+    videos: VideoSearchConfig = Field(default_factory=VideoSearchConfig)
+    news: NewsSearchConfig = Field(default_factory=NewsSearchConfig)
+    books: BooksSearchConfig = Field(default_factory=BooksSearchConfig)
 
 
 class ExecToolConfig(BaseModel):
