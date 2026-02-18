@@ -10,7 +10,7 @@ from pathlib import Path
 import httpx
 
 IMAGE_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
-AUDIO_TYPES = {"audio/mpeg", "audio/wav", "audio/ogg", "audio/mp3", "audio/webm"}
+AUDIO_TYPES = {"audio/mpeg", "audio/wav", "audio/ogg", "audio/mp3", "audio/webm", "audio/x-wav"}
 VIDEO_TYPES = {"video/mp4", "video/quicktime", "video/webm"}
 
 
@@ -181,9 +181,7 @@ async def _get_video_duration(ffmpeg_path: str, video_path: str) -> float | None
     return None
 
 
-async def _extract_single_frame(
-    ffmpeg_path: str, video_path: str, timestamp: float
-) -> str | None:
+async def _extract_single_frame(ffmpeg_path: str, video_path: str, timestamp: float) -> str | None:
     """Extract a single frame at the given timestamp."""
     try:
         with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tmp:
@@ -226,7 +224,7 @@ async def _extract_single_frame(
 
 async def extract_video_frames(path: str, max_frames: int = 16) -> list[str]:
     """Extract frames from video as base64 data URIs.
-    
+
     Uses head/tail trimming and increasing frame budget per the video frame extraction plan.
     """
     import math
