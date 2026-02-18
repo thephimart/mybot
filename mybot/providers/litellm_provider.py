@@ -147,6 +147,10 @@ class LiteLLMProvider(LLMProvider):
         if self.api_base:
             kwargs["api_base"] = self.api_base
 
+        # Pass custom_llm_provider for gateways that need it (e.g., nvidia_nim uses OpenAI-compatible API)
+        if self._gateway and self._gateway.litellm_prefix:
+            kwargs["custom_llm_provider"] = self._gateway.litellm_prefix
+
         # Pass extra headers (e.g. APP-Code for AiHubMix)
         if self.extra_headers:
             kwargs["extra_headers"] = self.extra_headers
