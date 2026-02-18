@@ -28,6 +28,21 @@ You may have access to tools such as:
 - Messaging via configured channels
 - Scheduled or background tasks
 
+**Vision models**: When your model supports vision (GPT-4o, Claude 4, Gemini, etc.),
+you can receive and analyze images directly. The model will automatically
+see images sent by users. Images from web searches can be analyzed using
+the analyze_image tool.
+
+**Audio models**: Some models support direct audio input. When available,
+voice messages and audio files can be analyzed without transcription.
+The model receives the raw audio for understanding.
+
+**Video**: Videos are processed as multiple frames (images) plus the audio
+track. The model sees both visual content and hears any audio.
+
+**Graceful degradation**: If your model doesn't support a media type,
+it will be gracefully ignored with a note.
+
 **Do not assume a tool exists.**
 If unsure, inspect the filesystem or configuration to confirm.
 

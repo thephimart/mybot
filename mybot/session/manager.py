@@ -37,8 +37,30 @@ class Session:
         self.updated_at = datetime.now()
 
     def get_history(self, max_messages: int = 500) -> list[dict[str, Any]]:
-        """Get recent messages in LLM format (role + content only)."""
-        return [{"role": m["role"], "content": m["content"]} for m in self.messages[-max_messages:]]
+        """
+        Get recent messages in LLM format.
+
+        CRITICAL: Media content is stripped - only text is returned.
+        Base64 images/audio are NOT stored in history to prevent:
+        1. Session file bloat
+        2. Token count explosion
+        3. Storage growth
+        """
+        result = []
+        for m in self.messages[-max_messages:]:
+            content = m.get("content")
+
+            if isinstance(content, list):
+                text_parts = []
+                for block in content:
+                    if isinstance(block, dict):
+                        if block.get("type") == "text":
+                            text_parts.append(block.get("text", ""))
+                content = " ".join(text_parts) if text_parts else "[media]"
+
+            result.append({"role": m["role"], "content": content})
+
+        return result
 
     def clear(self) -> None:
         """Clear all messages and reset session to initial state."""

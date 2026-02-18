@@ -155,6 +155,10 @@ class LiteLLMProvider(LLMProvider):
             kwargs["tools"] = tools
             kwargs["tool_choice"] = "auto"
 
+        modalities = self._get_required_modalities(messages)
+        if modalities:
+            kwargs["modalities"] = modalities
+
         try:
             response = await acompletion(**kwargs)
             return self._parse_response(response)
@@ -207,3 +211,39 @@ class LiteLLMProvider(LLMProvider):
     def get_default_model(self) -> str:
         """Get the default model."""
         return self.default_model
+
+    def _has_audio_input(self, messages: list[dict[str, Any]]) -> bool:
+        """Check if any message contains audio input blocks."""
+        for msg in messages:
+            content = msg.get("content")
+            if isinstance(content, list):
+                for block in content:
+                    if isinstance(block, dict) and block.get("type") == "input_audio":
+                        return True
+        return False
+
+    def _has_image_input(self, messages: list[dict[str, Any]]) -> bool:
+        """Check if any message contains image input blocks."""
+        for msg in messages:
+            content = msg.get("content")
+            if isinstance(content, list):
+                for block in content:
+                    if isinstance(block, dict) and block.get("type") == "image_url":
+                        return True
+        return False
+
+    def _get_required_modalities(self, messages: list[dict[str, Any]]) -> list[str] | None:
+        """Determine required modalities based on message content."""
+        has_audio = self._has_audio_input(messages)
+        has_image = self._has_image_input(messages)
+
+        if not has_audio and not has_image:
+            return None
+
+        modalities = ["text"]
+        if has_image:
+            modalities.append("image")
+        if has_audio:
+            modalities.append("audio")
+
+        return modalities

@@ -67,6 +67,7 @@ mybot intentionally includes only:
 
 - Agent loop (LLM ↔ tools)
 - Tool execution (including web, image, video, news, and book search)
+- Vision, audio, and video support (for multimodal models like GPT-4o, Claude 4, Gemini)
 - Persistent memory
 - Scheduling / cron
 - Minimal channels:

@@ -18,6 +18,7 @@ from mybot.agent.tools.registry import ToolRegistry
 from mybot.agent.tools.shell import ExecTool
 from mybot.agent.tools.spawn import SpawnTool
 from mybot.agent.tools.web import (
+    AnalyzeImageTool,
     BooksSearchTool,
     ImageSearchTool,
     NewsSearchTool,
@@ -118,6 +119,7 @@ class AgentLoop:
         self.tools.register(NewsSearchTool())
         self.tools.register(BooksSearchTool())
         self.tools.register(WebFetchTool())
+        self.tools.register(AnalyzeImageTool())
 
         # Message tool
         message_tool = MessageTool(send_callback=self.bus.publish_outbound)
@@ -308,12 +310,13 @@ class AgentLoop:
             asyncio.create_task(self._consolidate_memory(session))
 
         self._set_tool_context(msg.channel, msg.chat_id)
-        initial_messages = self.context.build_messages(
+        initial_messages = await self.context.build_messages(
             history=session.get_history(max_messages=self.memory_window),
             current_message=msg.content,
             media=msg.media if msg.media else None,
             channel=msg.channel,
             chat_id=msg.chat_id,
+            model=self.model,
         )
         final_content, tools_used = await self._run_agent_loop(initial_messages)
 
@@ -359,11 +362,12 @@ class AgentLoop:
         session_key = f"{origin_channel}:{origin_chat_id}"
         session = self.sessions.get_or_create(session_key)
         self._set_tool_context(origin_channel, origin_chat_id)
-        initial_messages = self.context.build_messages(
+        initial_messages = await self.context.build_messages(
             history=session.get_history(max_messages=self.memory_window),
             current_message=msg.content,
             channel=origin_channel,
             chat_id=origin_chat_id,
+            model=self.model,
         )
         final_content, _ = await self._run_agent_loop(initial_messages)
 
