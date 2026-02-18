@@ -4,8 +4,6 @@ import platform
 from pathlib import Path
 from typing import Any
 
-from loguru import logger
-
 from mybot.agent.memory import MemoryStore
 from mybot.agent.skills import SkillsLoader
 from mybot.utils.media import (

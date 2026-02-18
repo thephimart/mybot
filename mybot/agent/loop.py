@@ -158,6 +158,67 @@ class AgentLoop:
             if isinstance(cron_tool, CronTool):
                 cron_tool.set_context(channel, chat_id)
 
+    async def _transcribe_media(self, media: list[str]) -> str | None:
+        """Transcribe audio/video media using faster-whisper."""
+        import mimetypes
+
+        from mybot.config.loader import load_config
+        from mybot.utils.media import (
+            AUDIO_TYPES,
+            VIDEO_TYPES,
+            encode_audio_file,
+            encode_audio_url,
+            process_video,
+        )
+        from mybot.utils.transcriber import get_transcriber
+
+        config = load_config()
+        transcriber_config = config.transcriber
+
+        transcriber = get_transcriber(
+            model=transcriber_config.model,
+            device=transcriber_config.device,
+            compute_type=transcriber_config.compute_type,
+        )
+
+        transcriptions: list[str] = []
+
+        for path_or_url in media:
+            # Check if it's audio
+            mime, _ = mimetypes.guess_type(path_or_url)
+            is_audio = mime in AUDIO_TYPES or path_or_url.lower().endswith(
+                (".mp3", ".wav", ".ogg", ".webm", ".m4a")
+            )
+            is_video = mime in VIDEO_TYPES or path_or_url.lower().endswith(
+                (".mp4", ".webm", ".mov", ".avi", ".mkv", ".m4v")
+            )
+
+            if is_audio:
+                # Direct audio file
+                result = encode_audio_file(path_or_url)
+                if not result:
+                    result = await encode_audio_url(path_or_url)
+                if result:
+                    b64, fmt = result
+                    text = await transcriber.transcribe_base64(b64, fmt)
+                    transcriptions.append(text)
+                else:
+                    logger.warning(f"Failed to encode audio: {path_or_url}")
+
+            elif is_video:
+                # Video - extract audio and transcribe
+                frames, audio_data = await process_video(path_or_url, max_frames=0)
+                if audio_data:
+                    b64, fmt = audio_data
+                    text = await transcriber.transcribe_base64(b64, fmt)
+                    transcriptions.append(text)
+                else:
+                    logger.warning(f"Failed to extract audio from video: {path_or_url}")
+            else:
+                logger.warning(f"Unknown media type for transcription: {path_or_url}")
+
+        return " | ".join(transcriptions) if transcriptions else None
+
     async def _run_agent_loop(self, initial_messages: list[dict]) -> tuple[str | None, list[str]]:
         """
         Run the agent iteration loop.
@@ -319,6 +380,28 @@ class AgentLoop:
             model=self.model,
         )
         final_content, tools_used = await self._run_agent_loop(initial_messages)
+
+        # Fallback: if LLM returns audio error, transcribe audio and retry
+        if (
+            final_content
+            and "At most 0 audio(s) may be provided" in final_content
+            and msg.media
+        ):
+            logger.info("Audio not supported by model, attempting transcription fallback")
+            transcription_text = await self._transcribe_media(msg.media)
+            if transcription_text:
+                retry_message = (
+                    f"{msg.content}\n\n[Audio transcription: {transcription_text}]"
+                )
+                retry_messages = await self.context.build_messages(
+                    history=session.get_history(max_messages=self.memory_window),
+                    current_message=retry_message,
+                    media=None,  # No media - text only
+                    channel=msg.channel,
+                    chat_id=msg.chat_id,
+                    model=self.model,
+                )
+                final_content, tools_used = await self._run_agent_loop(retry_messages)
 
         if final_content is None:
             final_content = "I've completed processing but have no response to give."

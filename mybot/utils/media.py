@@ -230,7 +230,7 @@ async def extract_video_frames(path: str, max_frames: int = 16) -> list[str]:
     Uses head/tail trimming and increasing frame budget per the video frame extraction plan.
     """
     import math
-    
+
     ffmpeg_path = _get_ffmpeg_path()
     if not ffmpeg_path:
         return []
@@ -245,10 +245,10 @@ async def extract_video_frames(path: str, max_frames: int = 16) -> list[str]:
 
     # Head trim: remove startup junk (camera shake, black frames, mic click)
     head_trim = min(0.25, duration * 0.10)
-    
+
     # Tail trim: remove outro junk (fades, credits, silence)
     tail_trim = min(0.5, duration * 0.15)
-    
+
     # Usable window
     usable_duration = max(0.0, duration - head_trim - tail_trim)
 
