@@ -499,6 +499,8 @@ def agent(
 
     if message:
         # Single message mode
+        if media:
+            console.print(f"[dim]Sending with media: {media}[/dim]")
         async def run_once():
             with _thinking_ctx():
                 response = await agent_loop.process_direct(

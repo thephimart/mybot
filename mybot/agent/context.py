@@ -192,9 +192,10 @@ To recall past events, grep {workspace_path}/memory/HISTORY.md"""
         Gracefully degrades for non-capable models.
         """
         if not media:
+            logger.debug("No media provided, returning plain text")
             return text
 
-        logger.debug(f"Processing media: {media}, model: {model}")
+        logger.info(f"_build_user_content: media={media}, model={model}")
         model_supports_vision = model and is_vision_capable(model)
         model_supports_audio = model and is_audio_capable(model)
 
