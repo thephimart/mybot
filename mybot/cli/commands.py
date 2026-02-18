@@ -200,84 +200,24 @@ def onboard():
 
 
 def _create_workspace_templates(workspace: Path):
-    """Create default workspace template files."""
-    templates = {
-        "AGENTS.md": """# Agent Instructions
+    """Copy default workspace template files from package."""
+    import shutil
 
-You are a helpful AI assistant. Be concise, accurate, and friendly.
+    source_workspace = Path(__file__).parent.parent / "workspace"
 
-## Guidelines
+    if not source_workspace.exists():
+        console.print("  [yellow]Warning: source templates not found[/yellow]")
+        return
 
-- Always explain what you're doing before taking actions
-- Ask for clarification when the request is ambiguous
-- Use tools to help accomplish tasks
-- Remember important information in memory/MEMORY.md; past events are logged in memory/HISTORY.md
-""",
-        "SOUL.md": """# Soul
+    for src_file in source_workspace.rglob("*"):
+        if src_file.is_file():
+            rel_path = src_file.relative_to(source_workspace)
+            dest_file = workspace / rel_path
 
-I am mybot, a lightweight AI assistant.
-
-## Personality
-
-- Helpful and friendly
-- Concise and to the point
-- Curious and eager to learn
-
-## Values
-
-- Accuracy over speed
-- User privacy and safety
-- Transparency in actions
-""",
-        "USER.md": """# User
-
-Information about the user goes here.
-
-## Preferences
-
-- Communication style: (casual/formal)
-- Timezone: (your timezone)
-- Language: (your preferred language)
-""",
-    }
-
-    for filename, content in templates.items():
-        file_path = workspace / filename
-        if not file_path.exists():
-            file_path.write_text(content)
-            console.print(f"  [dim]Created {filename}[/dim]")
-
-    # Create memory directory and MEMORY.md
-    memory_dir = workspace / "memory"
-    memory_dir.mkdir(exist_ok=True)
-    memory_file = memory_dir / "MEMORY.md"
-    if not memory_file.exists():
-        memory_file.write_text("""# Long-term Memory
-
-This file stores important information that should persist across sessions.
-
-## User Information
-
-(Important facts about the user)
-
-## Preferences
-
-(User preferences learned over time)
-
-## Important Notes
-
-(Things to remember)
-""")
-        console.print("  [dim]Created memory/MEMORY.md[/dim]")
-
-    history_file = memory_dir / "HISTORY.md"
-    if not history_file.exists():
-        history_file.write_text("")
-        console.print("  [dim]Created memory/HISTORY.md[/dim]")
-
-    # Create skills directory for custom user skills
-    skills_dir = workspace / "skills"
-    skills_dir.mkdir(exist_ok=True)
+            if not dest_file.exists():
+                dest_file.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(src_file, dest_file)
+                console.print(f"  [dim]Created {rel_path}[/dim]")
 
 
 def _make_provider(config: Config):
