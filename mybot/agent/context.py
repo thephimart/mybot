@@ -211,10 +211,7 @@ To recall past events, grep {workspace_path}/memory/HISTORY.md"""
             if not data_uri:
                 data_uri = await encode_image_url(path_or_url)
             if data_uri and not _looks_like_video(path_or_url):
-                content_parts.append({
-                    "type": "image_url",
-                    "image_url": {"url": data_uri}
-                })
+                content_parts.append({"type": "image_url", "image_url": {"url": data_uri}})
                 handled = True
 
             # AUDIO - try if image didn't succeed
@@ -224,22 +221,22 @@ To recall past events, grep {workspace_path}/memory/HISTORY.md"""
                     result = await encode_audio_url(path_or_url)
                 if result:
                     b64, fmt = result
-                    content_parts.append({
-                        "type": "input_audio",
-                        "input_audio": {"data": b64, "format": fmt}
-                    })
+                    content_parts.append(
+                        {"type": "input_audio", "input_audio": {"data": b64, "format": fmt}}
+                    )
                     handled = True
 
             # VIDEO - try last fallback
-            # Note: Video audio extraction may not be supported by all models
-            # Only send frames for now, skip audio
+            # Include audio - if model doesn't support it, transcription fallback will handle it
             if not handled:
-                frames, _ = await process_video(path_or_url, max_frames=16)
+                frames, audio_data = await process_video(path_or_url, max_frames=16)
                 for frame in frames:
-                    content_parts.append({
-                        "type": "image_url",
-                        "image_url": {"url": frame}
-                    })
+                    content_parts.append({"type": "image_url", "image_url": {"url": frame}})
+                if audio_data:
+                    b64, fmt = audio_data
+                    content_parts.append(
+                        {"type": "input_audio", "input_audio": {"data": b64, "format": fmt}}
+                    )
                 if not frames:
                     errors.append(f"Failed to process video: {path_or_url}")
 
