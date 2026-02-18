@@ -100,6 +100,7 @@ class ProvidersConfig(BaseModel):
     minimax: ProviderConfig = Field(default_factory=ProviderConfig)
     aihubmix: ProviderConfig = Field(default_factory=ProviderConfig)  # AiHubMix API gateway
     openai_codex: ProviderConfig = Field(default_factory=ProviderConfig)  # OpenAI Codex (OAuth)
+    nvidia_nim: ProviderConfig = Field(default_factory=ProviderConfig)  # NVIDIA NIM
 
 
 class GatewayConfig(BaseModel):
