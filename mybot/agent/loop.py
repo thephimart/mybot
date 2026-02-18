@@ -219,6 +219,22 @@ class AgentLoop:
 
         return " | ".join(transcriptions) if transcriptions else None
 
+    def _strip_audio_from_messages(self, messages: list[dict]) -> list[dict]:
+        """Remove input_audio blocks from messages for models that don't support audio."""
+        result = []
+        for msg in messages:
+            content = msg.get("content")
+            if isinstance(content, list):
+                new_content = [
+                    block
+                    for block in content
+                    if not (isinstance(block, dict) and block.get("type") == "input_audio")
+                ]
+                result.append({**msg, "content": new_content})
+            else:
+                result.append(msg)
+        return result
+
     async def _run_agent_loop(self, initial_messages: list[dict]) -> tuple[str | None, list[str]]:
         """
         Run the agent iteration loop.
@@ -389,7 +405,7 @@ class AgentLoop:
         ):
             logger.info("Audio not supported by model, attempting transcription fallback")
             transcription_text = await self._transcribe_media(msg.media)
-            if transcription_text:
+            if transcription_text and transcription_text.strip():
                 retry_message = (
                     f"{msg.content}\n\n[Audio transcription: {transcription_text}]"
                 )
@@ -401,6 +417,18 @@ class AgentLoop:
                     chat_id=msg.chat_id,
                     model=self.model,
                 )
+                final_content, tools_used = await self._run_agent_loop(retry_messages)
+            else:
+                logger.info("Transcription empty, retrying with video frames only")
+                retry_messages = await self.context.build_messages(
+                    history=session.get_history(max_messages=self.memory_window),
+                    current_message=msg.content,
+                    media=msg.media,
+                    channel=msg.channel,
+                    chat_id=msg.chat_id,
+                    model=self.model,
+                )
+                retry_messages = self._strip_audio_from_messages(retry_messages)
                 final_content, tools_used = await self._run_agent_loop(retry_messages)
 
         if final_content is None:
