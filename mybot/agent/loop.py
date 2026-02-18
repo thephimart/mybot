@@ -408,11 +408,12 @@ class AgentLoop:
                 retry_messages = await self.context.build_messages(
                     history=session.get_history(max_messages=self.memory_window),
                     current_message=retry_message,
-                    media=None,  # No media - text only
+                    media=msg.media,
                     channel=msg.channel,
                     chat_id=msg.chat_id,
                     model=self.model,
                 )
+                retry_messages = self._strip_audio_from_messages(retry_messages)
                 final_content, tools_used = await self._run_agent_loop(retry_messages)
             else:
                 logger.info("Transcription empty, retrying with video frames only")
