@@ -310,6 +310,70 @@ PROVIDERS: tuple[ProviderSpec, ...] = (
         strip_model_prefix=False,
         model_overrides=(),
     ),
+    # === Ollama (local model server) ======================================
+    # Ollama runs locally and provides OpenAI-compatible API.
+    # Default: http://localhost:11434/v1
+    # Models: ollama/llama2, ollama/mistral, ollama/codellama, etc.
+    # Note: Requires OLLAMA_API_BASE env var for model info in some LiteLLM versions.
+    # No API key needed for local usage.
+    ProviderSpec(
+        name="ollama",
+        keywords=("ollama",),
+        env_key="OLLAMA_API_KEY",  # Not typically needed for local
+        display_name="Ollama",
+        litellm_prefix="ollama",  # llama2 → ollama/llama2
+        skip_prefixes=("ollama/",),
+        env_extras=(("OLLAMA_API_BASE", "{api_base}"),),
+        is_gateway=False,
+        is_local=True,
+        detect_by_key_prefix="",
+        detect_by_base_keyword="localhost:11434",
+        default_api_base="http://localhost:11434/v1",
+        strip_model_prefix=False,
+        model_overrides=(),
+    ),
+    # === LM Studio (local model server) ====================================
+    # LM Studio provides OpenAI-compatible API for GGUF models.
+    # Default: http://localhost:1234/v1
+    # Models: lm-studio/Meta-Llama-3.1-8B-Instruct-GGUF, etc.
+    # No API key needed for local usage.
+    ProviderSpec(
+        name="lmstudio",
+        keywords=("lm-studio", "lmstudio"),
+        env_key="",  # Not needed for local
+        display_name="LM Studio",
+        litellm_prefix="lm-studio",  # model → lm-studio/model
+        skip_prefixes=("lm-studio/",),
+        env_extras=(),
+        is_gateway=False,
+        is_local=True,
+        detect_by_key_prefix="",
+        detect_by_base_keyword="localhost:1234",
+        default_api_base="http://localhost:1234/v1",
+        strip_model_prefix=False,
+        model_overrides=(),
+    ),
+    # === llama.cpp (via llama-server) ======================================
+    # llama.cpp served via llama-server provides OpenAI-compatible API.
+    # Default: http://localhost:8080/v1
+    # Uses standard OpenAI-compatible endpoint (no special prefix needed).
+    # No API key needed for local usage.
+    ProviderSpec(
+        name="llamacpp",
+        keywords=("llama.cpp", "llamacpp", "llama-cpp"),
+        env_key="",  # Not needed for local
+        display_name="llama.cpp",
+        litellm_prefix="openai",  # llama.cpp is OpenAI-compatible
+        skip_prefixes=("openai/",),
+        env_extras=(),
+        is_gateway=False,
+        is_local=True,
+        detect_by_key_prefix="",
+        detect_by_base_keyword="llama",
+        default_api_base="http://localhost:8080/v1",
+        strip_model_prefix=True,
+        model_overrides=(),
+    ),
     # === Auxiliary (not a primary LLM provider) ============================
     # Groq: mainly used for Whisper voice transcription, also usable for LLM.
     # Needs "groq/" prefix for LiteLLM routing. Placed last — it rarely wins fallback.

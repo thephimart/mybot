@@ -101,6 +101,9 @@ class ProvidersConfig(BaseModel):
     aihubmix: ProviderConfig = Field(default_factory=ProviderConfig)  # AiHubMix API gateway
     openai_codex: ProviderConfig = Field(default_factory=ProviderConfig)  # OpenAI Codex (OAuth)
     nvidia_nim: ProviderConfig = Field(default_factory=ProviderConfig)  # NVIDIA NIM
+    ollama: ProviderConfig = Field(default_factory=ProviderConfig)  # Ollama local
+    lmstudio: ProviderConfig = Field(default_factory=ProviderConfig)  # LM Studio local
+    llamacpp: ProviderConfig = Field(default_factory=ProviderConfig)  # llama.cpp local
 
 
 class GatewayConfig(BaseModel):
