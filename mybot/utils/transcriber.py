@@ -37,8 +37,9 @@ class Transcriber:
         return self._model
 
     async def transcribe(self, audio_path: str) -> str:
-        """Transcribe audio file to text."""
+        """Transcribe audio file to text with optimized settings."""
         import os
+
         file_size = os.path.getsize(audio_path)
         logger.info(f"Transcribing audio file, size: {file_size} bytes")
 
@@ -47,7 +48,14 @@ class Transcriber:
         # Run transcription in executor to avoid blocking
         loop = asyncio.get_event_loop()
         segments, info = await loop.run_in_executor(
-            None, model.transcribe, audio_path
+            None,
+            lambda: model.transcribe(
+                audio_path,
+                beam_size=1,
+                best_of=1,
+                vad_filter=True,
+                vad_parameters=dict(min_silence_duration_ms=500),
+            ),
         )
 
         # Wait for segments generator
