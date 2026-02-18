@@ -155,9 +155,8 @@ class LiteLLMProvider(LLMProvider):
             kwargs["tools"] = tools
             kwargs["tool_choice"] = "auto"
 
-        modalities = self._get_required_modalities(messages)
-        if modalities:
-            kwargs["modalities"] = modalities
+        # Note: modalities parameter removed - let LiteLLM detect vision content
+        # automatically from image_url blocks in messages
 
         try:
             response = await acompletion(**kwargs)
