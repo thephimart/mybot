@@ -233,18 +233,14 @@ To recall past events, grep {workspace_path}/memory/HISTORY.md"""
                     handled = True
 
             # VIDEO - try last fallback
+            # Note: Video audio extraction may not be supported by all models
+            # Only send frames for now, skip audio
             if not handled:
-                frames, audio = await process_video(path_or_url, frame_count=4)
+                frames, _ = await process_video(path_or_url, frame_count=4)
                 for frame in frames:
                     content_parts.append({
                         "type": "image_url",
                         "image_url": {"url": frame}
-                    })
-                if audio:
-                    b64, fmt = audio
-                    content_parts.append({
-                        "type": "input_audio",
-                        "input_audio": {"data": b64, "format": fmt}
                     })
                 if not frames:
                     errors.append(f"Failed to process video: {path_or_url}")
