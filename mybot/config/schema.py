@@ -176,7 +176,7 @@ class TranscriberConfig(BaseModel):
     """Audio/video transcription configuration."""
 
     model: str = "base"  # faster-whisper model: tiny, base, small, medium, large-v3
-    device: str = "auto"  # auto, cpu, cuda
+    device: str = "cpu"  # auto, cpu, cuda
     compute_type: str = "int8"  # int8, int8_float32, float16
 
 

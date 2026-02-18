@@ -774,6 +774,10 @@ def status():
 
         console.print(f"Model: {config.agents.defaults.model}")
 
+        # Transcriber config
+        tc = config.transcriber
+        console.print(f"Transcriber: {tc.model} ({tc.device})")
+
         # Check API keys from registry
         for spec in PROVIDERS:
             p = getattr(config.providers, spec.name, None)
