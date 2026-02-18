@@ -49,6 +49,34 @@ class LiteLLMProvider(LLMProvider):
         # Drop unsupported parameters for providers (e.g., gpt-5 rejects some params)
         litellm.drop_params = True
 
+        # Monkey-patch vision support for models LiteLLM doesn't recognize
+        # This is needed because LiteLLM's supports_vision() is often outdated
+        self._patch_vision_support()
+
+    def _patch_vision_support(self) -> None:
+        """Patch LiteLLM to recognize certain models as vision-capable."""
+        import litellm
+
+        _original_supports_vision = litellm.supports_vision
+
+        def _patched_supports_vision(model: str, custom_llm_provider=None) -> bool:
+            # Check original first
+            if _original_supports_vision(model, custom_llm_provider):
+                return True
+            # Known vision models that LiteLLM doesn't recognize
+            vision_models = {
+                "moonshotai/kimi-k2.5",
+                "moonshotai/kimi-k2.5-vision-preview",
+                "moonshotai/kimi-k2.5-vision",
+            }
+            model_lower = model.lower()
+            for vm in vision_models:
+                if vm in model_lower:
+                    return True
+            return False
+
+        litellm.supports_vision = _patched_supports_vision
+
     def _setup_env(self, api_key: str, api_base: str | None, model: str) -> None:
         """Set environment variables based on detected provider."""
         spec = self._gateway or find_by_model(model)
