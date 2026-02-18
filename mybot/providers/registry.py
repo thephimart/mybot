@@ -78,17 +78,17 @@ PROVIDERS: tuple[ProviderSpec, ...] = (
     ),
     # === NVIDIA NIM (NVIDIA Inference Microservices) ========================
     # NVIDIA NIM provides OpenAI-compatible endpoints for various models.
-    # Uses "nvidia_nim" custom provider in LiteLLM.
+    # Uses OpenAI-compatible API - pass model name as-is (e.g., moonshotai/kimi-k2.5).
     # Detect by api_base containing "nvidia.com" or "integrate.api.nvidia.com".
     ProviderSpec(
         name="nvidia_nim",
         keywords=(),
         env_key="NVIDIA_API_KEY",  # Uses NVIDIA API key (nvapi-...)
         display_name="NVIDIA NIM",
-        litellm_prefix="openai",  # nvidia_nim uses OpenAI-compatible API
-        skip_prefixes=("openai/",),
+        litellm_prefix="",  # Don't add prefix - pass model name as-is
+        skip_prefixes=(),
         is_gateway=True,
-        strip_model_prefix=True,  # Strip provider/ prefix for NIM
+        strip_model_prefix=False,  # Don't strip - keep full model name
         detect_by_key_prefix="nvapi-",  # NVIDIA API keys start with nvapi-
         detect_by_base_keyword="nvidia.com",
         default_api_base="https://integrate.api.nvidia.com/v1",
