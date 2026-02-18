@@ -514,6 +514,5 @@ Respond with ONLY valid JSON, no markdown fences."""
             media=media or [],
         )
 
-        logger.info(f"process_direct: media={msg.media}")
         response = await self._process_message(msg, session_key=session_key)
         return response.content if response else ""

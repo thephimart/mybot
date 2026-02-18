@@ -15,6 +15,7 @@ venv/
 
 # OpenCode & development
 /dev_tasks.md
+/corrections.md
 .opencode*
 /AGENTS.md
 

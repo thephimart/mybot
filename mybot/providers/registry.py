@@ -76,6 +76,23 @@ PROVIDERS: tuple[ProviderSpec, ...] = (
         is_gateway=True,
         strip_model_prefix=True,
     ),
+    # === NVIDIA NIM (NVIDIA Inference Microservices) ========================
+    # NVIDIA NIM provides OpenAI-compatible endpoints for various models.
+    # Uses "nvidia_nim" custom provider in LiteLLM.
+    # Detect by api_base containing "nvidia.com" or "integrate.api.nvidia.com".
+    ProviderSpec(
+        name="nvidia_nim",
+        keywords=(),
+        env_key="NVIDIA_API_KEY",  # Uses NVIDIA API key (nvapi-...)
+        display_name="NVIDIA NIM",
+        litellm_prefix="openai",  # nvidia_nim uses OpenAI-compatible API
+        skip_prefixes=("openai/",),
+        is_gateway=True,
+        strip_model_prefix=True,  # Strip provider/ prefix for NIM
+        detect_by_key_prefix="nvapi-",  # NVIDIA API keys start with nvapi-
+        detect_by_base_keyword="nvidia.com",
+        default_api_base="https://integrate.api.nvidia.com/v1",
+    ),
     # === Gateways (detected by api_key / api_base, not model name) =========
     # Gateways can route any model, so they win in fallback.
     # OpenRouter: global gateway, keys start with "sk-or-"
