@@ -438,9 +438,15 @@ def gateway(
 def agent(
     message: str = typer.Option(None, "--message", "-m", help="Message to send to the agent"),
     session_id: str = typer.Option("cli:direct", "--session", "-s", help="Session ID"),
-    image: List[str] = typer.Option(None, "--image", "-i", help="Image file path or URL (can be repeated)"),
-    audio: List[str] = typer.Option(None, "--audio", "-a", help="Audio file path or URL (can be repeated)"),
-    video: List[str] = typer.Option(None, "--video", "-v", help="Video file path or URL (can be repeated)"),
+    image: List[str] = typer.Option(
+        None, "--image", "-i", help="Image file path or URL (can be repeated)"
+    ),
+    audio: List[str] = typer.Option(
+        None, "--audio", "-a", help="Audio file path or URL (can be repeated)"
+    ),
+    video: List[str] = typer.Option(
+        None, "--video", "-v", help="Video file path or URL (can be repeated)"
+    ),
     markdown: bool = typer.Option(
         True, "--markdown/--no-markdown", help="Render assistant output as Markdown"
     ),
@@ -501,9 +507,7 @@ def agent(
         # Single message mode
         async def run_once():
             with _thinking_ctx():
-                response = await agent_loop.process_direct(
-                    message, session_id, media=media or None
-                )
+                response = await agent_loop.process_direct(message, session_id, media=media or None)
             _print_agent_response(response, render_markdown=markdown)
             await agent_loop.close_mcp()
 
@@ -776,7 +780,7 @@ def status():
 
         # Transcriber config
         tc = config.transcriber
-        console.print(f"Transcriber: {tc.model} ({tc.device})")
+        console.print(f"Transcriber: {tc.whisper_model} ({tc.device})")
 
         # Check API keys from registry
         for spec in PROVIDERS:

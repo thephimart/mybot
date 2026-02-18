@@ -176,9 +176,8 @@ class AgentLoop:
         transcriber_config = config.transcriber
 
         transcriber = get_transcriber(
-            model=transcriber_config.model,
+            whisper_model=transcriber_config.whisper_model,
             device=transcriber_config.device,
-            compute_type=transcriber_config.compute_type,
         )
 
         transcriptions: list[str] = []
@@ -210,7 +209,9 @@ class AgentLoop:
                 frames, audio_data = await process_video(path_or_url, max_frames=0)
                 if audio_data:
                     b64, fmt = audio_data
-                    logger.info(f"Extracted audio from video, size: {len(b64)} bytes, format: {fmt}")
+                    logger.info(
+                        f"Extracted audio from video, size: {len(b64)} bytes, format: {fmt}"
+                    )
                     text = await transcriber.transcribe_base64(b64, fmt)
                     transcriptions.append(text)
                 else:
@@ -399,17 +400,11 @@ class AgentLoop:
         final_content, tools_used = await self._run_agent_loop(initial_messages)
 
         # Fallback: if LLM returns audio error, transcribe audio and retry
-        if (
-            final_content
-            and "At most 0 audio(s) may be provided" in final_content
-            and msg.media
-        ):
+        if final_content and "At most 0 audio(s) may be provided" in final_content and msg.media:
             logger.info("Audio not supported by model, attempting transcription fallback")
             transcription_text = await self._transcribe_media(msg.media)
             if transcription_text and transcription_text.strip():
-                retry_message = (
-                    f"{msg.content}\n\n[Audio transcription: {transcription_text}]"
-                )
+                retry_message = f"{msg.content}\n\n[Audio transcription: {transcription_text}]"
                 retry_messages = await self.context.build_messages(
                     history=session.get_history(max_messages=self.memory_window),
                     current_message=retry_message,

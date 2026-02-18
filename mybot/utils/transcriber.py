@@ -8,18 +8,42 @@ from typing import Any
 from loguru import logger
 
 
+def _detect_device(device: str) -> tuple[str, str]:
+    """
+    Determine device and compute type for faster-whisper.
+
+    Returns (device, compute_type) tuple.
+    """
+    if device == "cpu":
+        return "cpu", "int8"
+
+    # auto - try GPU, fallback to CPU
+    # faster-whisper's "auto" should handle CUDA detection
+    # but we also check for AMD/Intel via environment
+    try:
+        import torch
+
+        if torch.cuda.is_available():
+            return "cuda", "float16"
+    except ImportError:
+        pass
+
+    # Check for other GPUs via ONNX
+    # Default to CUDA for NVIDIA, let ONNX handle AMD/Intel
+    return "auto", "float16"
+
+
 class Transcriber:
     """Async wrapper for faster-whisper transcription."""
 
     def __init__(
         self,
-        model: str = "base",
-        device: str = "auto",
-        compute_type: str = "int8",
+        whisper_model: str = "base",
+        device: str = "cpu",
     ):
-        self.model_name = model
-        self.device = device
-        self.compute_type = compute_type
+        self.whisper_model = whisper_model
+        self.requested_device = device
+        self.device, self.compute_type = _detect_device(device)
         self._model: Any = None
 
     def _get_model(self) -> Any:
@@ -27,9 +51,11 @@ class Transcriber:
         if self._model is None:
             from faster_whisper import WhisperModel
 
-            logger.info(f"Loading faster-whisper model: {self.model_name}")
+            logger.info(
+                f"Loading faster-whisper model: {self.whisper_model} on {self.device} ({self.compute_type})"
+            )
             self._model = WhisperModel(
-                self.model_name,
+                self.whisper_model,
                 device=self.device,
                 compute_type=self.compute_type,
             )
@@ -88,18 +114,16 @@ _global_transcriber: Transcriber | None = None
 
 
 def get_transcriber(
-    model: str = "base",
-    device: str = "auto",
-    compute_type: str = "int8",
+    whisper_model: str = "base",
+    device: str = "cpu",
 ) -> Transcriber:
     """Get or create global transcriber instance."""
     global _global_transcriber
 
     if _global_transcriber is None:
         _global_transcriber = Transcriber(
-            model=model,
+            whisper_model=whisper_model,
             device=device,
-            compute_type=compute_type,
         )
 
     return _global_transcriber

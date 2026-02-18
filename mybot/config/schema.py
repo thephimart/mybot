@@ -115,26 +115,31 @@ class GatewayConfig(BaseModel):
 
 class WebSearchConfig(BaseModel):
     """Web text search configuration."""
+
     max_results: int = 5
 
 
 class ImageSearchConfig(BaseModel):
     """Web image search configuration."""
+
     max_results: int = 5
 
 
 class VideoSearchConfig(BaseModel):
     """Web video search configuration."""
+
     max_results: int = 5
 
 
 class NewsSearchConfig(BaseModel):
     """Web news search configuration."""
+
     max_results: int = 5
 
 
 class BooksSearchConfig(BaseModel):
     """Web books search configuration."""
+
     max_results: int = 5
 
 
@@ -175,9 +180,8 @@ class ToolsConfig(BaseModel):
 class TranscriberConfig(BaseModel):
     """Audio/video transcription configuration."""
 
-    model: str = "base"  # faster-whisper model: tiny, base, small, medium, large-v3
-    device: str = "cpu"  # auto, cpu, cuda
-    compute_type: str = "int8"  # int8, int8_float32, float16
+    whisper_model: str = "base"  # faster-whisper model: tiny, base, small, medium, large-v3
+    device: str = "cpu"  # auto (GPU if available), cpu
 
 
 class Config(BaseSettings):
