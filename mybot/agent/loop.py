@@ -210,6 +210,7 @@ class AgentLoop:
                 frames, audio_data = await process_video(path_or_url, max_frames=0)
                 if audio_data:
                     b64, fmt = audio_data
+                    logger.info(f"Extracted audio from video, size: {len(b64)} bytes, format: {fmt}")
                     text = await transcriber.transcribe_base64(b64, fmt)
                     transcriptions.append(text)
                 else:

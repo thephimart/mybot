@@ -38,6 +38,10 @@ class Transcriber:
 
     async def transcribe(self, audio_path: str) -> str:
         """Transcribe audio file to text."""
+        import os
+        file_size = os.path.getsize(audio_path)
+        logger.info(f"Transcribing audio file, size: {file_size} bytes")
+
         model = self._get_model()
 
         # Run transcription in executor to avoid blocking
@@ -52,7 +56,7 @@ class Transcriber:
             text_parts.append(segment.text.strip())
 
         result = " ".join(text_parts)
-        logger.info(f"Transcription result: {result[:100]}...")
+        logger.info(f"Transcription result: '{result}'")
         return result
 
     async def transcribe_base64(self, audio_b64: str, format: str = "wav") -> str:
