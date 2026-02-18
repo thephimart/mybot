@@ -236,7 +236,7 @@ To recall past events, grep {workspace_path}/memory/HISTORY.md"""
             # Note: Video audio extraction may not be supported by all models
             # Only send frames for now, skip audio
             if not handled:
-                frames, _ = await process_video(path_or_url, frame_count=4)
+                frames, _ = await process_video(path_or_url, max_frames=16)
                 for frame in frames:
                     content_parts.append({
                         "type": "image_url",

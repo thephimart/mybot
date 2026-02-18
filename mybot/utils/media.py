@@ -224,8 +224,13 @@ async def _extract_single_frame(
     return None
 
 
-async def extract_video_frames(path: str, count: int = 4) -> list[str]:
-    """Extract frames from video as base64 data URIs."""
+async def extract_video_frames(path: str, max_frames: int = 16) -> list[str]:
+    """Extract frames from video as base64 data URIs.
+    
+    Uses head/tail trimming and increasing frame budget per the video frame extraction plan.
+    """
+    import math
+    
     ffmpeg_path = _get_ffmpeg_path()
     if not ffmpeg_path:
         return []
@@ -238,7 +243,28 @@ async def extract_video_frames(path: str, count: int = 4) -> list[str]:
     if not duration or duration <= 0:
         return []
 
-    timestamps = [duration * i / count for i in range(count)]
+    # Head trim: remove startup junk (camera shake, black frames, mic click)
+    head_trim = min(0.25, duration * 0.10)
+    
+    # Tail trim: remove outro junk (fades, credits, silence)
+    tail_trim = min(0.5, duration * 0.15)
+    
+    # Usable window
+    usable_duration = max(0.0, duration - head_trim - tail_trim)
+
+    # Frame budget: increasing with duration, capped at max_frames
+    if usable_duration <= 0:
+        frames_to_extract = 1
+    else:
+        frames_to_extract = math.ceil(usable_duration / 2.0)
+        frames_to_extract = max(1, min(max_frames, frames_to_extract))
+
+    # Sample times: distribute frames evenly within usable window
+    if frames_to_extract == 1 or usable_duration <= 0:
+        timestamps = [head_trim + usable_duration / 2]
+    else:
+        step = usable_duration / (frames_to_extract + 1)
+        timestamps = [head_trim + step * (i + 1) for i in range(frames_to_extract)]
 
     frames: list[str] = []
 
@@ -364,7 +390,7 @@ async def _download_video_to_temp(url: str) -> str | None:
 
 async def process_video(
     path_or_url: str,
-    frame_count: int = 4,
+    max_frames: int = 16,
 ) -> tuple[list[str], tuple[str, str] | None]:
     """Process video into frames and audio."""
     if path_or_url.startswith(("http://", "https://")):
@@ -375,7 +401,7 @@ async def process_video(
         local_path = path_or_url
 
     try:
-        frames = await extract_video_frames(local_path, frame_count)
+        frames = await extract_video_frames(local_path, max_frames)
         audio = await extract_video_audio(local_path)
         return frames, audio
     finally:
