@@ -438,9 +438,9 @@ def gateway(
 def agent(
     message: str = typer.Option(None, "--message", "-m", help="Message to send to the agent"),
     session_id: str = typer.Option("cli:direct", "--session", "-s", help="Session ID"),
-    image: List[str] = typer.Option(None, "--image", help="Image file path or URL"),
-    audio: List[str] = typer.Option(None, "--audio", help="Audio file path or URL"),
-    video: List[str] = typer.Option(None, "--video", help="Video file path or URL"),
+    image: List[str] = typer.Option(None, "--image", "-i", help="Image file path or URL (can be repeated)"),
+    audio: List[str] = typer.Option(None, "--audio", "-a", help="Audio file path or URL (can be repeated)"),
+    video: List[str] = typer.Option(None, "--video", "-v", help="Video file path or URL (can be repeated)"),
     markdown: bool = typer.Option(
         True, "--markdown/--no-markdown", help="Render assistant output as Markdown"
     ),

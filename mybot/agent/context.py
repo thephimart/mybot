@@ -194,10 +194,15 @@ To recall past events, grep {workspace_path}/memory/HISTORY.md"""
         if not media:
             return text
 
+        logger.debug(f"Processing media: {media}, model: {model}")
         model_supports_vision = model and is_vision_capable(model)
         model_supports_audio = model and is_audio_capable(model)
 
-        if not model_supports_vision and not model_supports_audio:
+        # Always attempt media encoding - model may support it even if LiteLLM detection is wrong
+        # The LLM will simply ignore unsupported content or return an error
+        force_attempt = True  # Debug flag - set to False to rely purely on detection
+
+        if not model_supports_vision and not model_supports_audio and not force_attempt:
             logger.debug(f"Model {model} does not support vision or audio, skipping media")
 
         content_parts: list[dict[str, Any]] = []
@@ -209,12 +214,18 @@ To recall past events, grep {workspace_path}/memory/HISTORY.md"""
 
         for path_or_url in media:
             handled = False
+            logger.debug(f"Processing media item: {path_or_url}")
 
             # IMAGE - try first (most common use case)
-            if model_supports_vision:
+            # Always attempt if force_attempt, otherwise check model capability
+            should_try_image = model_supports_vision or force_attempt
+            if should_try_image:
                 data_uri = encode_image_file(path_or_url)
                 if not data_uri:
+                    logger.debug(f"encode_image_file returned None, trying URL")
                     data_uri = await encode_image_url(path_or_url)
+                if data_uri:
+                    logger.debug(f"Got data URI, length: {len(data_uri)}")
                 if data_uri and not _looks_like_video(path_or_url):
                     content_parts.append({
                         "type": "image_url",
@@ -223,7 +234,8 @@ To recall past events, grep {workspace_path}/memory/HISTORY.md"""
                     handled = True
 
             # AUDIO - try if image didn't succeed
-            if not handled and model_supports_audio:
+            should_try_audio = model_supports_audio or force_attempt
+            if not handled and should_try_audio:
                 result = encode_audio_file(path_or_url)
                 if not result:
                     result = await encode_audio_url(path_or_url)
@@ -236,14 +248,15 @@ To recall past events, grep {workspace_path}/memory/HISTORY.md"""
                     handled = True
 
             # VIDEO - try last fallback (if no other modality succeeded)
-            if not handled and (model_supports_vision or model_supports_audio):
+            should_try_video = (model_supports_vision or model_supports_audio) or force_attempt
+            if not handled and should_try_video:
                 frames, audio = await process_video(path_or_url, frame_count=4)
                 for frame in frames:
                     content_parts.append({
                         "type": "image_url",
                         "image_url": {"url": frame}
                     })
-                if audio and model_supports_audio:
+                if audio and should_try_audio:
                     b64, fmt = audio
                     content_parts.append({
                         "type": "input_audio",
