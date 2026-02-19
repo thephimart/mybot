@@ -4,22 +4,9 @@
 
 ## Pending
 
-### restrict_to_workspace Behavior (HIGH)
+### Testing / Bug Hunting
 
-Implement proper workspace restriction when `restrict_to_workspace=true`:
-- `~/.mybot/*` → full read/write (except config.json)
-- `*/mybot/*` → read-only
-- Block `~/.mybot/config.json` always
-
-**Files:** `mybot/agent/tools/filesystem.py`, `shell.py`, `loop.py`
-
----
-
-### Status Command API Key Handling (HIGH)
-
-`mybot status` should not display apiKey values.
-
-**Files:** `mybot/config/loader.py`, `mybot/cli/commands.py`
+Active investigation for issues in the codebase.
 
 ---
 
@@ -39,7 +26,4 @@ Research local image generation. See https://pypi.org/project/stable-diffusion-c
 
 ## Completed
 
-- ✅ Exec timeout default: 60s → 300s
-- ✅ Trim ddgs: removed image/video/news/books search
-- ✅ TOOLS.md: tool availability table, web tools docs
-- ✅ AGENTS.md: check TOOLS.md first
+(All completed tasks moved to git history)

@@ -799,43 +799,54 @@ def cron_run(
 @app.command()
 def status():
     """Show mybot status."""
-    from mybot.config.loader import get_config_path, load_config
+    # SECURITY: Load raw JSON only — no pydantic, no secrets in memory
+    # NOTE: status MUST NOT call load_config() or instantiate ProviderConfig
+    import json
+    from pathlib import Path
+
+    from mybot.config.loader import get_config_path
 
     config_path = get_config_path()
-    config = load_config()
-    workspace = config.workspace_path
+    with open(config_path) as f:
+        cfg = json.load(f)
+
+    workspace = cfg.get("agents", {}).get("defaults", {}).get("workspace", "<unset>")
+    workspace_ok = workspace != "<unset>" and Path(workspace).expanduser().exists()
 
     console.print(f"{__logo__} mybot Status\n")
-
     console.print(
         f"Config: {config_path} {'[green]✓[/green]' if config_path.exists() else '[red]✗[/red]'}"
     )
     console.print(
-        f"Workspace: {workspace} {'[green]✓[/green]' if workspace.exists() else '[red]✗[/red]'}"
+        f"Workspace: {workspace} {'[green]✓[/green]' if workspace_ok else '[red]✗[/red]'}"
     )
 
     if config_path.exists():
         from mybot.providers.registry import PROVIDERS
 
-        console.print(f"Model: {config.agents.defaults.model}")
-        if config.agents.defaults.provider:
-            console.print(f"Provider: {config.agents.defaults.provider}")
+        defaults = cfg.get("agents", {}).get("defaults", {})
+        model = defaults.get("model", "<unset>")
+        provider = defaults.get("provider", "<unset>")
+        console.print(f"Model: {model}")
+        if provider != "<unset>":
+            console.print(f"Provider: {provider}")
 
-        # Transcriber settings
-        tc = config.transcriber
-        trans_type = "local" if tc.use_local else "groq"
-        console.print(f"Transcriber: {trans_type} ({tc.whisper_model}, {tc.device})")
+        transcriber = cfg.get("transcriber", {})
+        trans_type = "local" if transcriber.get("useLocal") else "groq"
+        whisper_model = transcriber.get("whisperModel", "base")
+        device = transcriber.get("device", "cpu")
+        console.print(f"Transcriber: {trans_type} ({whisper_model}, {device})")
 
-        # Check API keys from registry (only show configured)
+        providers = cfg.get("providers", {})
         for spec in PROVIDERS:
-            p = getattr(config.providers, spec.name, None)
-            if p is None:
-                continue
-            has_key = bool(p.api_key)
-            has_base = bool(p.api_base)
+            parts = spec.name.split("_")
+            key = parts[0] + "".join(p.title() for p in parts[1:])  # nvidia_nim → nvidiaNim
+            p = providers.get(key, {})
+            has_key = bool(p.get("apiKey"))
+            has_base = bool(p.get("apiBase"))
             if has_key or has_base:
-                if p.api_base:
-                    console.print(f"{spec.label}: [green]✓ {p.api_base}[/green]")
+                if has_base:
+                    console.print(f"{spec.label}: [green]✓ {p.get('apiBase')}[/green]")
                 else:
                     console.print(f"{spec.label}: [green]✓[/green]")
 
