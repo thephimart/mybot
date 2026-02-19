@@ -14,10 +14,7 @@ venv/
 .pytest_cache/
 
 # OpenCode & development
-/dev_tasks.md
-/corrections.md
 .opencode*
-/AGENTS.md
 
 # OS / editor junk
 .DS_Store
