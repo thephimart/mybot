@@ -345,36 +345,3 @@ class WebFetchTool(Tool):
         text = re.sub(r"</(p|div|section|article)>", "\n\n", text, flags=re.I)
         text = re.sub(r"<(br|hr)\s*/?>", "\n", text, flags=re.I)
         return _normalize(_strip_tags(text))
-
-
-class AnalyzeImageTool(Tool):
-    """Download an image from URL and prepare it for vision analysis."""
-
-    name = "analyze_image"
-    description = "Download an image from URL and prepare it for vision model analysis. " \
-                   "Use this to analyze images from search results or URLs."
-    parameters = {
-        "type": "object",
-        "properties": {
-            "url": {"type": "string", "description": "Image URL to analyze"},
-            "question": {"type": "string", "description": "What to ask about the image"},
-        },
-        "required": ["url"],
-    }
-
-    async def execute(self, url: str, question: str | None = None, **kwargs: Any) -> str:
-        from mybot.utils.media import encode_image_url
-
-        data_uri = await encode_image_url(url)
-        if not data_uri:
-            return json.dumps({
-                "error": "Failed to download image",
-                "url": url,
-                "hint": "The URL may be invalid or inaccessible"
-            })
-
-        return json.dumps({
-            "status": "ready_for_analysis",
-            "data_uri": data_uri,
-            "question": question or "Describe this image in detail",
-        })

@@ -36,7 +36,6 @@ dependencies = [
     "mcp>=1.0.0",
     "json-repair>=0.30.0",
     "ddgs>=3.0.0",
-    "faster-whisper>=1.0.0",
 ]
 
 [project.optional-dependencies]

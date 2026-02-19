@@ -177,13 +177,6 @@ class ToolsConfig(BaseModel):
     mcp_servers: dict[str, MCPServerConfig] = Field(default_factory=dict)
 
 
-class TranscriberConfig(BaseModel):
-    """Audio/video transcription configuration."""
-
-    whisper_model: str = "base"  # faster-whisper model: tiny, base, small, medium, large-v3
-    device: str = "cpu"  # auto (GPU if available), cpu
-
-
 class Config(BaseSettings):
     """Root configuration for mybot."""
 
@@ -192,7 +185,6 @@ class Config(BaseSettings):
     providers: ProvidersConfig = Field(default_factory=ProvidersConfig)
     gateway: GatewayConfig = Field(default_factory=GatewayConfig)
     tools: ToolsConfig = Field(default_factory=ToolsConfig)
-    transcriber: TranscriberConfig = Field(default_factory=TranscriberConfig)
 
     @property
     def workspace_path(self) -> Path:

@@ -382,10 +382,7 @@ def agent(
         None, "--image", "-i", help="Image file path or URL (can be repeated)"
     ),
     audio: List[str] = typer.Option(
-        None, "--audio", "-a", help="Audio file path or URL (can be repeated)"
-    ),
-    video: List[str] = typer.Option(
-        None, "--video", "-v", help="Video file path or URL (can be repeated)"
+        None, "--audio", "-a", help="Audio file path to transcribe (can be repeated)"
     ),
     markdown: bool = typer.Option(
         True, "--markdown/--no-markdown", help="Render assistant output as Markdown"
@@ -426,13 +423,31 @@ def agent(
     )
 
     # Normalize media from CLI options
-    media = []
-    if image:
-        media.extend(image)
+    media = image if image else None
+
+    # Transcribe audio files (same workflow as Telegram)
+    audio_transcription = ""
     if audio:
-        media.extend(audio)
-    if video:
-        media.extend(video)
+        from mybot.providers.transcription import GroqTranscriptionProvider
+
+        groq_key = config.providers.groq.api_key if config.providers.groq else None
+        if not groq_key:
+            console.print("[yellow]Warning: No Groq API key configured for audio transcription[/yellow]")
+        else:
+            transcriber = GroqTranscriptionProvider(api_key=groq_key)
+            console.print("[dim]Transcribing audio...[/dim]")
+
+            async def transcribe_all():
+                transcriptions = []
+                for audio_file in audio:
+                    text = await transcriber.transcribe(audio_file)
+                    if text:
+                        transcriptions.append(text)
+                return " | ".join(transcriptions) if transcriptions else ""
+
+            audio_transcription = asyncio.run(transcribe_all())
+            if audio_transcription:
+                console.print(f"[dim]Transcription: {audio_transcription[:100]}...[/dim]")
 
     # Show spinner when logs are off (no output to miss); skip when logs are on
     def _thinking_ctx():
@@ -444,10 +459,14 @@ def agent(
         return console.status("[dim]mybot is thinking...[/dim]", spinner="dots")
 
     if message:
+        # Append audio transcription to message (same workflow as Telegram)
+        if audio_transcription:
+            message = f"{message}\n\n[Audio transcription: {audio_transcription}]"
+
         # Single message mode
         async def run_once():
             with _thinking_ctx():
-                response = await agent_loop.process_direct(message, session_id, media=media or None)
+                response = await agent_loop.process_direct(message, session_id, media=media)
             _print_agent_response(response, render_markdown=markdown)
             await agent_loop.close_mcp()
 
@@ -717,10 +736,6 @@ def status():
         from mybot.providers.registry import PROVIDERS
 
         console.print(f"Model: {config.agents.defaults.model}")
-
-        # Transcriber config
-        tc = config.transcriber
-        console.print(f"Transcriber: {tc.whisper_model} ({tc.device})")
 
         # Check API keys from registry
         for spec in PROVIDERS:

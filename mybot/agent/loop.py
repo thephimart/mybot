@@ -18,7 +18,6 @@ from mybot.agent.tools.registry import ToolRegistry
 from mybot.agent.tools.shell import ExecTool
 from mybot.agent.tools.spawn import SpawnTool
 from mybot.agent.tools.web import (
-    AnalyzeImageTool,
     BooksSearchTool,
     ImageSearchTool,
     NewsSearchTool,
@@ -119,7 +118,6 @@ class AgentLoop:
         self.tools.register(NewsSearchTool())
         self.tools.register(BooksSearchTool())
         self.tools.register(WebFetchTool())
-        self.tools.register(AnalyzeImageTool())
 
         # Message tool
         message_tool = MessageTool(send_callback=self.bus.publish_outbound)
@@ -157,85 +155,6 @@ class AgentLoop:
         if cron_tool := self.tools.get("cron"):
             if isinstance(cron_tool, CronTool):
                 cron_tool.set_context(channel, chat_id)
-
-    async def _transcribe_media(self, media: list[str]) -> str | None:
-        """Transcribe audio/video media using faster-whisper."""
-        import mimetypes
-
-        from mybot.config.loader import load_config
-        from mybot.utils.media import (
-            AUDIO_TYPES,
-            VIDEO_TYPES,
-            encode_audio_file,
-            encode_audio_url,
-            process_video,
-        )
-        from mybot.utils.transcriber import get_transcriber
-
-        config = load_config()
-        transcriber_config = config.transcriber
-
-        transcriber = get_transcriber(
-            whisper_model=transcriber_config.whisper_model,
-            device=transcriber_config.device,
-        )
-
-        transcriptions: list[str] = []
-
-        for path_or_url in media:
-            # Check if it's audio
-            mime, _ = mimetypes.guess_type(path_or_url)
-            is_audio = mime in AUDIO_TYPES or path_or_url.lower().endswith(
-                (".mp3", ".wav", ".ogg", ".webm", ".m4a")
-            )
-            is_video = mime in VIDEO_TYPES or path_or_url.lower().endswith(
-                (".mp4", ".webm", ".mov", ".avi", ".mkv", ".m4v")
-            )
-
-            if is_audio:
-                # Direct audio file
-                result = encode_audio_file(path_or_url)
-                if not result:
-                    result = await encode_audio_url(path_or_url)
-                if result:
-                    b64, fmt = result
-                    text = await transcriber.transcribe_base64(b64, fmt)
-                    transcriptions.append(text)
-                else:
-                    logger.warning(f"Failed to encode audio: {path_or_url}")
-
-            elif is_video:
-                # Video - extract audio and transcribe
-                frames, audio_data = await process_video(path_or_url, max_frames=0)
-                if audio_data:
-                    b64, fmt = audio_data
-                    logger.info(
-                        f"Extracted audio from video, size: {len(b64)} bytes, format: {fmt}"
-                    )
-                    text = await transcriber.transcribe_base64(b64, fmt)
-                    transcriptions.append(text)
-                else:
-                    logger.warning(f"Failed to extract audio from video: {path_or_url}")
-            else:
-                logger.warning(f"Unknown media type for transcription: {path_or_url}")
-
-        return " | ".join(transcriptions) if transcriptions else None
-
-    def _strip_audio_from_messages(self, messages: list[dict]) -> list[dict]:
-        """Remove input_audio blocks from messages for models that don't support audio."""
-        result = []
-        for msg in messages:
-            content = msg.get("content")
-            if isinstance(content, list):
-                new_content = [
-                    block
-                    for block in content
-                    if not (isinstance(block, dict) and block.get("type") == "input_audio")
-                ]
-                result.append({**msg, "content": new_content})
-            else:
-                result.append(msg)
-        return result
 
     async def _run_agent_loop(self, initial_messages: list[dict]) -> tuple[str | None, list[str]]:
         """
@@ -389,44 +308,14 @@ class AgentLoop:
             asyncio.create_task(self._consolidate_memory(session))
 
         self._set_tool_context(msg.channel, msg.chat_id)
-        initial_messages = await self.context.build_messages(
+        initial_messages = self.context.build_messages(
             history=session.get_history(max_messages=self.memory_window),
             current_message=msg.content,
             media=msg.media if msg.media else None,
             channel=msg.channel,
             chat_id=msg.chat_id,
-            model=self.model,
         )
         final_content, tools_used = await self._run_agent_loop(initial_messages)
-
-        # Fallback: if LLM returns audio error, transcribe audio and retry
-        if final_content and "At most 0 audio(s) may be provided" in final_content and msg.media:
-            logger.info("Audio not supported by model, attempting transcription fallback")
-            transcription_text = await self._transcribe_media(msg.media)
-            if transcription_text and transcription_text.strip():
-                retry_message = f"{msg.content}\n\n[Audio transcription: {transcription_text}]"
-                retry_messages = await self.context.build_messages(
-                    history=session.get_history(max_messages=self.memory_window),
-                    current_message=retry_message,
-                    media=msg.media,
-                    channel=msg.channel,
-                    chat_id=msg.chat_id,
-                    model=self.model,
-                )
-                retry_messages = self._strip_audio_from_messages(retry_messages)
-                final_content, tools_used = await self._run_agent_loop(retry_messages)
-            else:
-                logger.info("Transcription empty, retrying with video frames only")
-                retry_messages = await self.context.build_messages(
-                    history=session.get_history(max_messages=self.memory_window),
-                    current_message=msg.content,
-                    media=msg.media,
-                    channel=msg.channel,
-                    chat_id=msg.chat_id,
-                    model=self.model,
-                )
-                retry_messages = self._strip_audio_from_messages(retry_messages)
-                final_content, tools_used = await self._run_agent_loop(retry_messages)
 
         if final_content is None:
             final_content = "I've completed processing but have no response to give."
@@ -470,12 +359,11 @@ class AgentLoop:
         session_key = f"{origin_channel}:{origin_chat_id}"
         session = self.sessions.get_or_create(session_key)
         self._set_tool_context(origin_channel, origin_chat_id)
-        initial_messages = await self.context.build_messages(
+        initial_messages = self.context.build_messages(
             history=session.get_history(max_messages=self.memory_window),
             current_message=msg.content,
             channel=origin_channel,
             chat_id=origin_chat_id,
-            model=self.model,
         )
         final_content, _ = await self._run_agent_loop(initial_messages)
 

@@ -1,20 +1,13 @@
 """Context builder for assembling agent prompts."""
 
+import base64
+import mimetypes
 import platform
 from pathlib import Path
 from typing import Any
 
 from mybot.agent.memory import MemoryStore
 from mybot.agent.skills import SkillsLoader
-from mybot.utils.media import (
-    encode_audio_file,
-    encode_audio_url,
-    encode_image_file,
-    encode_image_url,
-    is_audio_capable,
-    is_vision_capable,
-    process_video,
-)
 
 
 class ContextBuilder:
@@ -110,7 +103,7 @@ Your workspace is at: {workspace_path}
 - Custom skills: {workspace_path}/skills/{{skill-name}}/SKILL.md
 
 IMPORTANT: When responding to direct questions or conversations, reply directly with your text response.
-Only use the 'message' tool when you need to send a message to a specific chat channel (like WhatsApp).
+Only use the 'message' tool when you need to send a message to a specific chat channel (like Telegram).
 For normal conversation, just respond with text - do not call the message tool.
 
 Always be helpful, accurate, and concise. When using tools, think step by step: what you know, what you need, and why you chose this tool.
@@ -129,7 +122,7 @@ To recall past events, grep {workspace_path}/memory/HISTORY.md"""
 
         return "\n\n".join(parts) if parts else ""
 
-    async def build_messages(
+    def build_messages(
         self,
         history: list[dict[str, Any]],
         current_message: str,
@@ -137,7 +130,6 @@ To recall past events, grep {workspace_path}/memory/HISTORY.md"""
         media: list[str] | None = None,
         channel: str | None = None,
         chat_id: str | None = None,
-        model: str | None = None,
     ) -> list[dict[str, Any]]:
         """
         Build the complete message list for an LLM call.
@@ -149,7 +141,6 @@ To recall past events, grep {workspace_path}/memory/HISTORY.md"""
             media: Optional list of local file paths for images/media.
             channel: Current channel (telegram, email).
             chat_id: Current chat/user ID.
-            model: Model identifier for capability detection.
 
         Returns:
             List of messages including system prompt.
@@ -166,87 +157,28 @@ To recall past events, grep {workspace_path}/memory/HISTORY.md"""
         messages.extend(history)
 
         # Current message (with optional image attachments)
-        user_content = await self._build_user_content(current_message, media, model)
+        user_content = self._build_user_content(current_message, media)
         messages.append({"role": "user", "content": user_content})
 
         return messages
 
-    async def _build_user_content(
-        self,
-        text: str,
-        media: list[str] | None,
-        model: str | None = None,
-    ) -> str | list[dict[str, Any]]:
-        """
-        Build user message content with media (images, audio, video).
-
-        Handles:
-        - Local images (encoded to base64 data URIs)
-        - Image URLs (downloaded and encoded)
-        - Local audio (encoded for LiteLLM input_audio format)
-        - Audio URLs (downloaded and encoded)
-        - Videos (frame extraction + audio track)
-
-        Gracefully degrades for non-capable models.
-        """
+    def _build_user_content(self, text: str, media: list[str] | None) -> str | list[dict[str, Any]]:
+        """Build user message content with optional base64-encoded images."""
         if not media:
             return text
 
-        # Always attempt media encoding - LiteLLM detects vision/audio from content blocks
-        model_supports_vision = model and is_vision_capable(model)
-        model_supports_audio = model and is_audio_capable(model)
+        images = []
+        for path in media:
+            p = Path(path)
+            mime, _ = mimetypes.guess_type(path)
+            if not p.is_file() or not mime or not mime.startswith("image/"):
+                continue
+            b64 = base64.b64encode(p.read_bytes()).decode()
+            images.append({"type": "image_url", "image_url": {"url": f"data:{mime};base64,{b64}"}})
 
-        content_parts: list[dict[str, Any]] = []
-        errors: list[str] = []
-
-        def _looks_like_video(url: str) -> bool:
-            video_exts = (".mp4", ".webm", ".mov", ".avi", ".mkv", ".m4v")
-            return url.lower().endswith(video_exts)
-
-        for path_or_url in media:
-            handled = False
-
-            # IMAGE - try first (most common use case)
-            data_uri = encode_image_file(path_or_url)
-            if not data_uri:
-                data_uri = await encode_image_url(path_or_url)
-            if data_uri and not _looks_like_video(path_or_url):
-                content_parts.append({"type": "image_url", "image_url": {"url": data_uri}})
-                handled = True
-
-            # AUDIO - try if image didn't succeed
-            if not handled:
-                result = encode_audio_file(path_or_url)
-                if not result:
-                    result = await encode_audio_url(path_or_url)
-                if result:
-                    b64, fmt = result
-                    content_parts.append(
-                        {"type": "input_audio", "input_audio": {"data": b64, "format": fmt}}
-                    )
-                    handled = True
-
-            # VIDEO - try last fallback
-            # Include audio - if model doesn't support it, transcription fallback will handle it
-            if not handled:
-                frames, audio_data = await process_video(path_or_url, max_frames=16)
-                for frame in frames:
-                    content_parts.append({"type": "image_url", "image_url": {"url": frame}})
-                if audio_data:
-                    b64, fmt = audio_data
-                    content_parts.append(
-                        {"type": "input_audio", "input_audio": {"data": b64, "format": fmt}}
-                    )
-                if not frames:
-                    errors.append(f"Failed to process video: {path_or_url}")
-
-        if content_parts:
-            content_parts.insert(0, {"type": "text", "text": text})
-            return content_parts
-
-        if errors:
-            return text + "\n\n[Note: " + "; ".join(errors) + "]"
-        return text
+        if not images:
+            return text
+        return images + [{"type": "text", "text": text}]
 
     def add_tool_result(
         self, messages: list[dict[str, Any]], tool_call_id: str, tool_name: str, result: str
