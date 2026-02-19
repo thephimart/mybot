@@ -391,7 +391,7 @@ def agent(
         False, "--logs/--no-logs", help="Show mybot runtime logs during chat"
     ),
 ):
-    """Interact with the agent directly."""
+    """Interact with the agent directly. Run without arguments for interactive mode."""
     from loguru import logger
 
     from mybot.agent.loop import AgentLoop

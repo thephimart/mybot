@@ -1,6 +1,22 @@
 # Available Tools
 
-This document describes the tools available to mybot.
+This document describes the tools available to mybot. All tools listed here are available **unless** explicitly stated otherwise in skill metadata.
+
+**Note:** The agent has access to these tools directly via function calling. Do NOT use CLI commands as a workaround when a native tool exists.
+
+## Tool Availability by Mode
+
+| Tool | `mybot agent` (direct) | `mybot gateway` (service) |
+|------|-------------------------|--------------------------|
+| read_file, write_file, edit_file, list_dir | ✅ | ✅ |
+| exec | ✅ | ✅ |
+| web_search, image_search, video_search, news_search, books_search, web_fetch | ✅ | ✅ |
+| spawn | ✅ | ✅ |
+| message | ⚠️ requires context | ✅ |
+| cron | ❌ CLI only | ✅ |
+| mcp_* | ✅ (if configured) | ✅ (if configured) |
+
+**Note:** The `cron` tool is only available in gateway mode. Use CLI commands (`mybot cron add ...`) in agent mode.
 
 ## File Operations
 
@@ -33,7 +49,7 @@ list_dir(path: str) -> str
 ### exec
 Execute a shell command and return output.
 ```
-exec(command: str, working_dir: str = None) -> str
+exec(command: str, working_dir: str = null) -> str
 ```
 
 **Safety Notes:**
@@ -44,76 +60,47 @@ exec(command: str, working_dir: str = None) -> str
 
 ## Web Access
 
-### web_search
-Search the web using DDGS (DuckDuckGo).
-```
-web_search(query: str, count: int = 5, region: str = "us-en", safesearch: str = "moderate", timelimit: str | None = None) -> str
-```
-Returns search results with titles, URLs, and snippets. No API key required.
+All web tools use the `ddgs` Python library (DuckDuckGo) and require no API key.
 
-**Parameters:**
-- `query` - Search query (required)
-- `count` - Max results 1-10 (default 5)
-- `region` - Region code: us-en, uk-en, ru-ru, etc. (default us-en)
-- `safesearch` - on, moderate, off (default moderate)
-- `timelimit` - d, w, m, y (optional)
+### web_search
+Search the web for text results.
+```
+web_search(query: str, count: int = 5, region: str = "us-en", safesearch: str = "moderate", timelimit: str | null = null) -> str
+```
+
+Returns titles, URLs, and snippets.
 
 ### image_search
 Search for images.
 ```
-image_search(query: str, count: int = 5, region: str = "us-en", safesearch: str = "moderate", size: str | None = None, color: str | None = None, type_image: str | None = None) -> str
+image_search(query: str, count: int = 5, region: str = "us-en", safesearch: str = "moderate", size: str | null = null, color: str | null = null, type_image: str | null = null) -> str
 ```
-Returns image URLs, thumbnails, and sources.
 
-**Parameters:**
-- `query` - Image search query (required)
-- `count` - Max results 1-10 (default 5)
-- `region` - Region code (default us-en)
-- `safesearch` - on, moderate, off (default moderate)
-- `size` - Small, Medium, Large, Wallpaper (optional)
-- `color` - Red, Orange, Yellow, Green, Blue, etc. (optional)
-- `type_image` - photo, clipart, gif, transparent, line (optional)
+Returns image URLs, thumbnails, and sources.
 
 ### video_search
 Search for videos.
 ```
-video_search(query: str, count: int = 5, region: str = "us-en", safesearch: str = "moderate", timelimit: str | None = None, resolution: str | None = None, duration: str | None = None) -> str
+video_search(query: str, count: int = 5, region: str = "us-en", safesearch: str = "moderate", timelimit: str | null = null, resolution: str | null = null, duration: str | null = null) -> str
 ```
-Returns video URLs, descriptions, and duration.
 
-**Parameters:**
-- `query` - Video search query (required)
-- `count` - Max results 1-10 (default 5)
-- `region` - Region code (default us-en)
-- `safesearch` - on, moderate, off (default moderate)
-- `timelimit` - d, w, m (optional)
-- `resolution` - high, standard (optional)
-- `duration` - short, medium, long (optional)
+Returns video URLs, descriptions, and duration.
 
 ### news_search
 Search for news articles.
 ```
-news_search(query: str, count: int = 5, region: str = "us-en", safesearch: str = "moderate", timelimit: str | None = None) -> str
+news_search(query: str, count: int = 5, region: str = "us-en", safesearch: str = "moderate", timelimit: str | null = null) -> str
 ```
-Returns news titles, URLs, sources, and dates.
 
-**Parameters:**
-- `query` - News search query (required)
-- `count` - Max results 1-10 (default 5)
-- `region` - Region code (default us-en)
-- `safesearch` - on, moderate, off (default moderate)
-- `timelimit` - d, w, m (optional)
+Returns news titles, URLs, sources, and dates.
 
 ### books_search
 Search for books.
 ```
 books_search(query: str, count: int = 5) -> str
 ```
-Returns book titles, authors, publishers, and download links.
 
-**Parameters:**
-- `query` - Book search query (required)
-- `count` - Max results 1-10 (default 5)
+Returns book titles, authors, publishers, and download links.
 
 ### web_fetch
 Fetch and extract main content from a URL.
@@ -121,62 +108,60 @@ Fetch and extract main content from a URL.
 web_fetch(url: str, extractMode: str = "markdown", maxChars: int = 50000) -> str
 ```
 
-**Notes:**
-- Content is extracted using readability
-- Supports markdown or plain text extraction
-- Output is truncated at 50,000 characters by default
+Uses readability for HTML extraction. Returns JSON with extracted text, status, and metadata.
 
 ## Communication
 
 ### message
-Send a message to the user (used internally).
+Send a message to the user on a chat channel.
 ```
-message(content: str, channel: str = None, chat_id: str = None) -> str
+message(content: str, channel: str = null, chat_id: str = null) -> str
 ```
+
+Requires both channel and chat_id. In gateway mode these are set automatically from the incoming message context. In chat mode, you must specify them explicitly.
 
 ## Background Tasks
 
 ### spawn
 Spawn a subagent to handle a task in the background.
 ```
-spawn(task: str, label: str = None) -> str
+spawn(task: str, label: str = null) -> str
 ```
 
-Use for complex or time-consuming tasks that can run independently. The subagent will complete the task and report back when done.
+The subagent will complete the task and report back when done.
 
-## Scheduled Reminders (Cron)
+## Scheduling
 
-Use the `exec` tool to create scheduled reminders with `mybot cron add`:
+### cron (CLI)
 
-### Set a recurring reminder
-```bash
-# Every day at 9am
-mybot cron add --name "morning" --message "Good morning! ☀️" --cron "0 9 * * *"
+Use the CLI to schedule reminders. Available commands:
 
-# Every 2 hours
-mybot cron add --name "water" --message "Drink water! 💧" --every 7200
+```
+mybot cron add --name "reminder" --message "TEXT" --cron "0 9 * * *"
+mybot cron add --name "reminder" --message "TEXT" --every 7200
+mybot cron add --name "reminder" --message "TEXT" --at "2026-02-12T10:30:00"
+mybot cron list
+mybot cron remove <job_id>
 ```
 
-### Set a one-time reminder
-```bash
-# At a specific time (ISO format)
-mybot cron add --name "meeting" --message "Meeting starts now!" --at "2025-01-31T15:00:00"
-```
+- `--cron` - cron expression (e.g., "0 9 * * *" for daily at 9am)
+- `--every` - interval in seconds (e.g., 7200 for every 2 hours)
+- `--at` - one-time execution (ISO format)
 
-### Manage reminders
-```bash
-mybot cron list              # List all jobs
-mybot cron remove <job_id>   # Remove a job
-```
+## MCP Servers
 
-## Heartbeat Task Management
+MCP (Model Context Protocol) servers can be configured to expose additional tools. When configured, MCP tools are automatically loaded and available with the `mcp_` prefix (e.g., `mcp_servername_toolname`).
 
-The `HEARTBEAT.md` file in the workspace is checked every 30 minutes.
-Use file operations to manage periodic tasks:
+## Heartbeat Tasks
+
+The `HEARTBEAT.md` file in the workspace is checked every 30 minutes for high-priority tasks.
+
+**Note:** Heartbeat is only active in gateway mode (`mybot gateway`), not in chat mode.
+
+To manage heartbeat tasks, use file operations:
 
 ### Add a heartbeat task
-```python
-# Append a new task
+```
 edit_file(
     path="HEARTBEAT.md",
     old_text="## Example Tasks",
@@ -185,8 +170,7 @@ edit_file(
 ```
 
 ### Remove a heartbeat task
-```python
-# Remove a specific task
+```
 edit_file(
     path="HEARTBEAT.md",
     old_text="- [ ] Task to remove\n",
@@ -195,8 +179,7 @@ edit_file(
 ```
 
 ### Rewrite all tasks
-```python
-# Replace the entire file
+```
 write_file(
     path="HEARTBEAT.md",
     content="# Heartbeat Tasks\n\n- [ ] Task 1\n- [ ] Task 2\n"

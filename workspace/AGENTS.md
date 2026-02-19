@@ -8,15 +8,20 @@ This file defines operational rules for agents running inside **mybot**.
 
 - Operate only within verified capabilities
 - Do not assume tools, files, or features exist
-- Inspect the environment before relying on anything
+- **Always check TOOLS.md and skills/ directory first** before claiming you can perform a task
+- If a tool isn't documented, it may not exist — ask the user or check the source
 
 ---
 
 ## Tools & capabilities
 
+**Always refer to `workspace/TOOLS.md` for the complete, authoritative list of available tools.**
+
 Built-in Tools can be found in `TOOLS.md`
 
-Built-in Skills can be found in `skills`
+Built-in Skills can be found in `skills/` (builtin) or `workspace/skills/` (workspace overrides)
+
+Skills are markdown files that teach the agent how to use specific tools or perform certain tasks. Some skills require external dependencies (CLI tools, environment variables) — check skill metadata for requirements.
 
 ---
 
@@ -34,9 +39,20 @@ USER.md is read-only and must not be modified.
 
 ## Scheduled reminders
 
-One-time reminders must use the scheduler:
+Use the `mybot cron` CLI command:
 
-mybot cron add --name "reminder" --message "TEXT" --at "YYYY-MM-DDTHH:MM:SS" --deliver --to "USER_ID" --channel "CHANNEL"
+```bash
+# Recurring
+mybot cron add --name "reminder" --message "TEXT" --cron "0 9 * * *"
+mybot cron add --name "reminder" --message "TEXT" --every 7200
+
+# One-time
+mybot cron add --name "reminder" --message "TEXT" --at "2026-02-12T10:30:00"
+
+# Manage
+mybot cron list
+mybot cron remove <job_id>
+```
 
 Do not write reminders to MEMORY.md.
 
@@ -44,7 +60,8 @@ Do not write reminders to MEMORY.md.
 
 ## Heartbeat
 
-`HEARTBEAT.md` is checked periodically.
+`HEARTBEAT.md` is checked periodically (every 30 minutes in gateway mode).
 
 - High-priority tasks only
 - Skip if empty (comments or headers only)
+- **Note:** Only active when running `mybot gateway`, not in direct chat mode
