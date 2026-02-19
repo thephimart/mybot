@@ -47,22 +47,30 @@ def _validate_url(url: str) -> tuple[bool, str]:
 class WebSearchTool(Tool):
     """Search the web using DDGS text search."""
 
-    name = "web_search"
-    description = "Search the web for text results. Returns titles, URLs, and snippets."
-    parameters = {
-        "type": "object",
-        "properties": {
-            "query": {"type": "string", "description": "Search query"},
-            "count": {"type": "integer", "description": "Max results (1-10)", "minimum": 1, "maximum": 10},
-            "region": {"type": "string", "description": "Region (us-en, uk-en, ru-ru, etc.)"},
-            "safesearch": {"type": "string", "enum": ["on", "moderate", "off"], "default": "moderate"},
-            "timelimit": {"type": "string", "description": "Time limit (d, w, m, y)"},
-        },
-        "required": ["query"],
-    }
-
     def __init__(self, max_results: int = 5):
         self.max_results = max_results
+
+    @property
+    def name(self) -> str:
+        return "web_search"
+
+    @property
+    def description(self) -> str:
+        return "Search the web for text results. Returns titles, URLs, and snippets."
+
+    @property
+    def parameters(self) -> dict[str, Any]:
+        return {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Search query"},
+                "count": {"type": "integer", "description": "Max results (1-10)", "minimum": 1, "maximum": 10},
+                "region": {"type": "string", "description": "Region (us-en, uk-en, ru-ru, etc.)"},
+                "safesearch": {"type": "string", "enum": ["on", "moderate", "off"], "default": "moderate"},
+                "timelimit": {"type": "string", "description": "Time limit (d, w, m, y)"},
+            },
+            "required": ["query"],
+        }
 
     async def execute(self, query: str, count: int | None = None, **kwargs: Any) -> str:
         try:
@@ -86,20 +94,28 @@ class WebSearchTool(Tool):
 class WebFetchTool(Tool):
     """Fetch and extract content from a URL using Readability."""
 
-    name = "web_fetch"
-    description = "Fetch URL and extract readable content (HTML → markdown/text)."
-    parameters = {
-        "type": "object",
-        "properties": {
-            "url": {"type": "string", "description": "URL to fetch"},
-            "extractMode": {"type": "string", "enum": ["markdown", "text"], "default": "markdown"},
-            "maxChars": {"type": "integer", "minimum": 100},
-        },
-        "required": ["url"],
-    }
-
     def __init__(self, max_chars: int = 50000):
         self.max_chars = max_chars
+
+    @property
+    def name(self) -> str:
+        return "web_fetch"
+
+    @property
+    def description(self) -> str:
+        return "Fetch URL and extract readable content (HTML → markdown/text)."
+
+    @property
+    def parameters(self) -> dict[str, Any]:
+        return {
+            "type": "object",
+            "properties": {
+                "url": {"type": "string", "description": "URL to fetch"},
+                "extractMode": {"type": "string", "enum": ["markdown", "text"], "default": "markdown"},
+                "maxChars": {"type": "integer", "minimum": 100},
+            },
+            "required": ["url"],
+        }
 
     async def execute(
         self, url: str, extractMode: str = "markdown", maxChars: int | None = None, **kwargs: Any
