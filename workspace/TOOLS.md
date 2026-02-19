@@ -156,23 +156,13 @@ write_file(
 
 ---
 
-## Media Handling
+## Media
 
 ### Images
-
-Attach images to your message by providing local file paths. The agent automatically encodes and sends them to the LLM for vision analysis.
-
-```
-# Example: when user provides an image
-# Just reference the file path in your response context
-# The system handles encoding automatically
-```
+You can analyze images. When images are provided, they are automatically encoded and sent to the LLM for vision analysis.
 
 ### Audio
-
-Audio files are automatically transcribed to text. You can:
-- Reference local audio files (`.mp3`, `.wav`, `.ogg`, `.m4a`)
-- The transcription is processed and included in your context
+You can transcribe and analyze audio. Audio files are automatically transcribed to text for your analysis.
 
 ---
 
