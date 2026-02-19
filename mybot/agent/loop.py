@@ -18,10 +18,6 @@ from mybot.agent.tools.registry import ToolRegistry
 from mybot.agent.tools.shell import ExecTool
 from mybot.agent.tools.spawn import SpawnTool
 from mybot.agent.tools.web import (
-    BooksSearchTool,
-    ImageSearchTool,
-    NewsSearchTool,
-    VideoSearchTool,
     WebFetchTool,
     WebSearchTool,
 )
@@ -113,10 +109,6 @@ class AgentLoop:
 
         # Web tools
         self.tools.register(WebSearchTool())
-        self.tools.register(ImageSearchTool())
-        self.tools.register(VideoSearchTool())
-        self.tools.register(NewsSearchTool())
-        self.tools.register(BooksSearchTool())
         self.tools.register(WebFetchTool())
 
         # Message tool

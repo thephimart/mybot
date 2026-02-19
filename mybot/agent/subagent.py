@@ -12,10 +12,6 @@ from mybot.agent.tools.filesystem import EditFileTool, ListDirTool, ReadFileTool
 from mybot.agent.tools.registry import ToolRegistry
 from mybot.agent.tools.shell import ExecTool
 from mybot.agent.tools.web import (
-    BooksSearchTool,
-    ImageSearchTool,
-    NewsSearchTool,
-    VideoSearchTool,
     WebFetchTool,
     WebSearchTool,
 )
@@ -119,10 +115,6 @@ class SubagentManager:
                 )
             )
             tools.register(WebSearchTool())
-            tools.register(ImageSearchTool())
-            tools.register(VideoSearchTool())
-            tools.register(NewsSearchTool())
-            tools.register(BooksSearchTool())
             tools.register(WebFetchTool())
 
             # Build messages with subagent-specific prompt

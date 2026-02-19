@@ -10,7 +10,7 @@ This document describes the tools available to mybot. All tools listed here are 
 |------|-------------------------|--------------------------|
 | read_file, write_file, edit_file, list_dir | ✅ | ✅ |
 | exec | ✅ | ✅ |
-| web_search, image_search, video_search, news_search, books_search, web_fetch | ✅ | ✅ |
+| web_search, web_fetch | ✅ | ✅ |
 | spawn | ✅ | ✅ |
 | message | ⚠️ requires context | ✅ |
 | cron | ❌ CLI only | ✅ |
@@ -53,7 +53,7 @@ exec(command: str, working_dir: str = null) -> str
 ```
 
 **Safety Notes:**
-- Commands have a configurable timeout (default 60s)
+- Commands have a configurable timeout (default 300s)
 - Dangerous commands are blocked (rm -rf, format, dd, shutdown, etc.)
 - Output is truncated at 10,000 characters
 - Optional `restrictToWorkspace` config to limit paths
@@ -69,38 +69,6 @@ web_search(query: str, count: int = 5, region: str = "us-en", safesearch: str = 
 ```
 
 Returns titles, URLs, and snippets.
-
-### image_search
-Search for images.
-```
-image_search(query: str, count: int = 5, region: str = "us-en", safesearch: str = "moderate", size: str | null = null, color: str | null = null, type_image: str | null = null) -> str
-```
-
-Returns image URLs, thumbnails, and sources.
-
-### video_search
-Search for videos.
-```
-video_search(query: str, count: int = 5, region: str = "us-en", safesearch: str = "moderate", timelimit: str | null = null, resolution: str | null = null, duration: str | null = null) -> str
-```
-
-Returns video URLs, descriptions, and duration.
-
-### news_search
-Search for news articles.
-```
-news_search(query: str, count: int = 5, region: str = "us-en", safesearch: str = "moderate", timelimit: str | null = null) -> str
-```
-
-Returns news titles, URLs, sources, and dates.
-
-### books_search
-Search for books.
-```
-books_search(query: str, count: int = 5) -> str
-```
-
-Returns book titles, authors, publishers, and download links.
 
 ### web_fetch
 Fetch and extract main content from a URL.
