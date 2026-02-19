@@ -98,7 +98,7 @@ Your workspace root is:
 The following workspace locations exist:
 - Long-term memory: {workspace_path}/memory/MEMORY.md
 - History log (append-only, grep-searchable): {workspace_path}/memory/HISTORY.md
-- Skills (if present): {workspace_path}/skills/{skill-name}/SKILL.md
+- Skills (if present): {workspace_path}/skills/{{skill-name}}/SKILL.md
 
 ## Capabilities (Declarative)
 You may have access to tools and skills provided by this runtime.
