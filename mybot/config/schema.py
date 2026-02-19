@@ -63,6 +63,7 @@ class AgentDefaults(BaseModel):
 
     workspace: str = "~/.mybot/workspace"
     model: str = "anthropic/claude-opus-4-5"
+    provider: str | None = None  # Explicit provider (e.g., "ollama", "openai"). None = auto-detect from model name
     max_tokens: int = 8192
     temperature: float = 0.7
     max_tool_iterations: int = 20
@@ -204,18 +205,27 @@ class Config(BaseSettings):
         self, model: str | None = None
     ) -> tuple["ProviderConfig | None", str | None]:
         """Match provider config and its registry name. Returns (config, spec_name)."""
-        from mybot.providers.registry import PROVIDERS
+        from mybot.providers.registry import PROVIDERS, find_by_name
 
         model_lower = (model or self.agents.defaults.model).lower()
+        explicit_provider = self.agents.defaults.provider
 
-        # Match by keyword (order follows PROVIDERS registry)
+        # 1. Explicit provider takes precedence
+        if explicit_provider:
+            spec = find_by_name(explicit_provider)
+            if spec:
+                p = getattr(self.providers, spec.name, None)
+                if p and (spec.is_oauth or p.api_key):
+                    return p, spec.name
+
+        # 2. Match by keyword (order follows PROVIDERS registry)
         for spec in PROVIDERS:
             p = getattr(self.providers, spec.name, None)
             if p and any(kw in model_lower for kw in spec.keywords):
                 if spec.is_oauth or p.api_key:
                     return p, spec.name
 
-        # Fallback: gateways first, then others (follows registry order)
+        # 3. Fallback: gateways first, then others (follows registry order)
         # OAuth providers are NOT valid fallbacks — they require explicit model selection
         for spec in PROVIDERS:
             if spec.is_oauth:
