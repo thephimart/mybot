@@ -751,11 +751,12 @@ def status():
             p = getattr(config.providers, spec.name, None)
             if p is None:
                 continue
-            if spec.is_local:
+            has_key = bool(p.api_key)
+            has_base = bool(p.api_base)
+            if has_key or has_base:
                 if p.api_base:
                     console.print(f"{spec.label}: [green]✓ {p.api_base}[/green]")
-            else:
-                if p.api_key:
+                else:
                     console.print(f"{spec.label}: [green]✓[/green]")
 
 
