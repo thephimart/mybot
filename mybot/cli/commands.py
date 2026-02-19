@@ -422,8 +422,49 @@ def agent(
         mcp_servers=config.tools.mcp_servers,
     )
 
-    # Normalize media from CLI options
-    media = image if image else None
+    # Download URL images to local files (same workflow as Telegram)
+    async def download_url_images(images: list[str]) -> list[str]:
+        import hashlib
+        import mimetypes
+
+        import httpx
+
+        local_paths = []
+        media_dir = Path.home() / ".mybot" / "media"
+        media_dir.mkdir(parents=True, exist_ok=True)
+
+        for img in images:
+            if img.startswith(("http://", "https://")):
+                try:
+                    console.print(f"[dim]Downloading image...[/dim]")
+                    async with httpx.AsyncClient(timeout=30.0) as client:
+                        resp = await client.get(img, follow_redirects=True)
+                        resp.raise_for_status()
+
+                        # Get extension from content-type or URL
+                        content_type = resp.headers.get("content-type", "")
+                        ext = mimetypes.guess_extension(content_type) or ".jpg"
+                        if ext == ".jpe":
+                            ext = ".jpg"
+
+                        # Save to media dir with hash-based filename
+                        url_hash = hashlib.md5(img.encode()).hexdigest()[:16]
+                        file_path = media_dir / f"{url_hash}{ext}"
+                        file_path.write_bytes(resp.content)
+
+                        local_paths.append(str(file_path))
+                        console.print(f"[dim]Saved to {file_path}[/dim]")
+                except Exception as e:
+                    console.print(f"[yellow]Warning: Failed to download image: {e}[/yellow]")
+            else:
+                # Already a local path
+                local_paths.append(img)
+
+        return local_paths
+
+    media = None
+    if image:
+        media = asyncio.run(download_url_images(image))
 
     # Transcribe audio files
     audio_transcription = ""
