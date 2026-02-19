@@ -746,22 +746,17 @@ def status():
         trans_type = "local" if tc.use_local else "groq"
         console.print(f"Transcriber: {trans_type} ({tc.whisper_model}, {tc.device})")
 
-        # Check API keys from registry
+        # Check API keys from registry (only show configured)
         for spec in PROVIDERS:
             p = getattr(config.providers, spec.name, None)
             if p is None:
                 continue
             if spec.is_local:
-                # Local deployments show api_base instead of api_key
                 if p.api_base:
                     console.print(f"{spec.label}: [green]✓ {p.api_base}[/green]")
-                else:
-                    console.print(f"{spec.label}: [dim]not set[/dim]")
             else:
-                has_key = bool(p.api_key)
-                console.print(
-                    f"{spec.label}: {'[green]✓[/green]' if has_key else '[dim]not set[/dim]'}"
-                )
+                if p.api_key:
+                    console.print(f"{spec.label}: [green]✓[/green]")
 
 
 # ============================================================================
