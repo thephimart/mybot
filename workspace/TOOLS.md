@@ -156,13 +156,26 @@ write_file(
 
 ---
 
-## Media
+## Image Encoding
 
-### Images
-You can analyze images. When images are provided, they are automatically encoded and sent to the LLM for vision analysis.
+```python
+import base64, mimetypes
+path = "path/to/image"
+mime = mimetypes.guess_type(path)[0]
+with open(path, "rb") as f:
+    b64 = base64.b64encode(f.read()).decode()
+# data:{mime};base64,{b64}
+```
 
-### Audio
-You can transcribe and analyze audio. Audio files are automatically transcribed to text for your analysis.
+---
+
+## Audio Transcription
+
+```python
+import asyncio
+from mybot.providers.transcription import get_transcriber
+text = asyncio.run(get_transcriber().transcribe("path/to/audio"))
+```
 
 ---
 
