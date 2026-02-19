@@ -738,6 +738,13 @@ def status():
         from mybot.providers.registry import PROVIDERS
 
         console.print(f"Model: {config.agents.defaults.model}")
+        if config.agents.defaults.provider:
+            console.print(f"Provider: {config.agents.defaults.provider}")
+
+        # Transcriber settings
+        tc = config.transcriber
+        trans_type = "local" if tc.use_local else "groq"
+        console.print(f"Transcriber: {trans_type} ({tc.whisper_model}, {tc.device})")
 
         # Check API keys from registry
         for spec in PROVIDERS:
