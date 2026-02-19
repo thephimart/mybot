@@ -471,6 +471,45 @@ def agent(
     if audio:
         from mybot.providers.transcription import get_transcriber
 
+        # Download URL audio to local files (same workflow as images)
+        async def download_url_audio(audios: list[str]) -> list[str]:
+            import hashlib
+            import mimetypes
+
+            import httpx
+
+            local_paths = []
+            media_dir = Path.home() / ".mybot" / "media"
+            media_dir.mkdir(parents=True, exist_ok=True)
+
+            for audio_url in audios:
+                if audio_url.startswith(("http://", "https://")):
+                    try:
+                        console.print(f"[dim]Downloading audio...[/dim]")
+                        async with httpx.AsyncClient(timeout=60.0) as client:
+                            resp = await client.get(audio_url, follow_redirects=True)
+                            resp.raise_for_status()
+
+                            content_type = resp.headers.get("content-type", "")
+                            ext = mimetypes.guess_extension(content_type) or ".wav"
+                            if ext == ".octet-stream":
+                                ext = ".wav"
+
+                            url_hash = hashlib.md5(audio_url.encode()).hexdigest()[:16]
+                            file_path = media_dir / f"{url_hash}{ext}"
+                            file_path.write_bytes(resp.content)
+
+                            local_paths.append(str(file_path))
+                            console.print(f"[dim]Saved to {file_path}[/dim]")
+                    except Exception as e:
+                        console.print(f"[yellow]Warning: Failed to download audio: {e}[/yellow]")
+                else:
+                    local_paths.append(audio_url)
+
+            return local_paths
+
+        local_audio = asyncio.run(download_url_audio(audio))
+
         groq_key = config.providers.groq.api_key if config.providers.groq else None
         transcriber = get_transcriber(
             use_local=config.transcriber.use_local,
@@ -482,7 +521,7 @@ def agent(
 
         async def transcribe_all():
             transcriptions = []
-            for audio_file in audio:
+            for audio_file in local_audio:
                 text = await transcriber.transcribe(audio_file)
                 if text:
                     transcriptions.append(text)
