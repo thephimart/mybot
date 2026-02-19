@@ -58,6 +58,44 @@ exec(command: str, working_dir: str = null) -> str
 - Output is truncated at 10,000 characters
 - Optional `restrictToWorkspace` config to limit paths
 
+## Media Recovery (Internal)
+
+When a media input is received as a local file path (e.g. due to a failed upstream workflow), the agent may recover the expected representation by executing the corresponding internal code via `exec`.
+
+These are not standalone tools. They are deterministic recovery procedures.
+
+### Image → Base64 Data URI
+Use when an image file exists locally but semantic image content was expected.
+
+```python
+import base64, mimetypes
+
+path = "path/to/image"
+mime = mimetypes.guess_type(path)[0] or "application/octet-stream"
+
+with open(path, "rb") as f:
+    b64 = base64.b64encode(f.read()).decode()
+
+print(f"data:{mime};base64,{b64}")
+```
+The agent should capture stdout and use the result as if it were received directly from the upstream pipeline.
+
+### Audio → Transcribed Text
+Use when text was expected but an audio file was received instead.
+
+```python
+import asyncio
+from mybot.providers.transcription import get_transcriber
+
+text = asyncio.run(
+    get_transcriber().transcribe("path/to/audio")
+)
+
+print(text)
+```
+
+The agent should capture stdout and use the result as if it were received directly from the upstream pipeline.
+
 ## Web Access
 
 All web tools use the `ddgs` Python library (DuckDuckGo) and require no API key.
@@ -152,29 +190,6 @@ write_file(
     path="HEARTBEAT.md",
     content="# Heartbeat Tasks\n\n- [ ] Task 1\n- [ ] Task 2\n"
 )
-```
-
----
-
-## Image Encoding
-
-```python
-import base64, mimetypes
-path = "path/to/image"
-mime = mimetypes.guess_type(path)[0]
-with open(path, "rb") as f:
-    b64 = base64.b64encode(f.read()).decode()
-# data:{mime};base64,{b64}
-```
-
----
-
-## Audio Transcription
-
-```python
-import asyncio
-from mybot.providers.transcription import get_transcriber
-text = asyncio.run(get_transcriber().transcribe("path/to/audio"))
 ```
 
 ---
