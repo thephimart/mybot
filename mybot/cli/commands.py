@@ -203,7 +203,7 @@ def _create_workspace_templates(workspace: Path):
     """Copy default workspace template files from package."""
     import shutil
 
-    source_workspace = Path(__file__).parent.parent / "workspace"
+    source_workspace = Path(__file__).parent.parent.parent / "workspace"
 
     if not source_workspace.exists():
         console.print("  [yellow]Warning: source templates not found[/yellow]")
@@ -430,7 +430,7 @@ def agent(
         import httpx
 
         local_paths = []
-        media_dir = Path.home() / ".mybot" / "media"
+        media_dir = config.workspace_path / "media"
         media_dir.mkdir(parents=True, exist_ok=True)
 
         for img in images:
@@ -479,7 +479,7 @@ def agent(
             import httpx
 
             local_paths = []
-            media_dir = Path.home() / ".mybot" / "media"
+            media_dir = config.workspace_path / "media"
             media_dir.mkdir(parents=True, exist_ok=True)
 
             for audio_url in audios:

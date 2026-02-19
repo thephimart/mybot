@@ -41,6 +41,7 @@ class ChannelManager:
                 self.channels["telegram"] = TelegramChannel(
                     self.config.channels.telegram,
                     self.bus,
+                    self.config.workspace_path,
                     groq_api_key=self.config.providers.groq.api_key if self.config.providers.groq else "",
                 )
                 logger.info("Telegram channel enabled")

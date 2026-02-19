@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import re
+from pathlib import Path
 
 from loguru import logger
 from telegram import BotCommand, Update
@@ -121,10 +122,12 @@ class TelegramChannel(BaseChannel):
         self,
         config: TelegramConfig,
         bus: MessageBus,
+        workspace_path: Path,
         groq_api_key: str = "",
     ):
         super().__init__(config, bus)
         self.config: TelegramConfig = config
+        self.workspace_path = workspace_path
         self.groq_api_key = groq_api_key
         self._app: Application | None = None
         self._chat_ids: dict[str, int] = {}  # Map sender_id to chat_id for replies
@@ -311,9 +314,7 @@ class TelegramChannel(BaseChannel):
                 ext = self._get_extension(media_type, getattr(media_file, "mime_type", None))
 
                 # Save to workspace/media/
-                from pathlib import Path
-
-                media_dir = Path.home() / ".mybot" / "media"
+                media_dir = self.workspace_path / "media"
                 media_dir.mkdir(parents=True, exist_ok=True)
 
                 file_path = media_dir / f"{media_file.file_id[:16]}{ext}"
