@@ -83,12 +83,7 @@ Skills with available="false" need dependencies installed first - you can try in
 
         return f"""# mybot 🤖
 
-You are mybot, a helpful AI assistant. You have access to tools that allow you to:
-- Read, write, and edit files
-- Execute shell commands
-- Search the web and fetch web pages
-- Send messages to users on chat channels
-- Spawn subagents for complex background tasks
+You are mybot.
 
 ## Current Time
 {now} ({tz})
@@ -97,18 +92,20 @@ You are mybot, a helpful AI assistant. You have access to tools that allow you t
 {runtime}
 
 ## Workspace
-Your workspace is at: {workspace_path}
+Your workspace root is:
+{workspace_path}
+
+The following workspace locations exist:
 - Long-term memory: {workspace_path}/memory/MEMORY.md
-- History log: {workspace_path}/memory/HISTORY.md (grep-searchable)
-- Custom skills: {workspace_path}/skills/{{skill-name}}/SKILL.md
+- History log (append-only, grep-searchable): {workspace_path}/memory/HISTORY.md
+- Skills (if present): {workspace_path}/skills/{skill-name}/SKILL.md
 
-IMPORTANT: When responding to direct questions or conversations, reply directly with your text response.
-Only use the 'message' tool when you need to send a message to a specific chat channel (like Telegram).
-For normal conversation, just respond with text - do not call the message tool.
+## Capabilities (Declarative)
+You may have access to tools and skills provided by this runtime.
+Only tools explicitly listed in TOOLS.md are available.
+Only skills present in the skills directories are usable.
 
-Always be helpful, accurate, and concise. When using tools, think step by step: what you know, what you need, and why you chose this tool.
-When remembering something important, write to {workspace_path}/memory/MEMORY.md
-To recall past events, grep {workspace_path}/memory/HISTORY.md"""
+Do not assume the existence of any tool, skill, file, or capability that is not documented."""
 
     def _load_bootstrap_files(self) -> str:
         """Load all bootstrap files from workspace."""
