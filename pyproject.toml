@@ -5,7 +5,7 @@ description = "A minimal bot core"
 requires-python = ">=3.11"
 license = {text = "MIT"}
 authors = [
-    {name = "mybot contributors"}
+    {name = "nanobot contributors, Phimart Consulting"}
 ]
 keywords = ["ai", "agent", "chatbot"]
 classifiers = [
@@ -37,6 +37,7 @@ dependencies = [
     "json-repair>=0.30.0",
     "ddgs>=3.0.0",
     "faster-whisper>=1.0.0",
+    "onnxruntime-gpu>=1.0.0
 ]
 
 [project.optional-dependencies]
