@@ -425,29 +425,31 @@ def agent(
     # Normalize media from CLI options
     media = image if image else None
 
-    # Transcribe audio files (same workflow as Telegram)
+    # Transcribe audio files
     audio_transcription = ""
     if audio:
-        from mybot.providers.transcription import GroqTranscriptionProvider
+        from mybot.providers.transcription import get_transcriber
 
         groq_key = config.providers.groq.api_key if config.providers.groq else None
-        if not groq_key:
-            console.print("[yellow]Warning: No Groq API key configured for audio transcription[/yellow]")
-        else:
-            transcriber = GroqTranscriptionProvider(api_key=groq_key)
-            console.print("[dim]Transcribing audio...[/dim]")
+        transcriber = get_transcriber(
+            use_local=config.transcriber.use_local,
+            whisper_model=config.transcriber.whisper_model,
+            device=config.transcriber.device,
+            groq_api_key=groq_key,
+        )
+        console.print("[dim]Transcribing audio...[/dim]")
 
-            async def transcribe_all():
-                transcriptions = []
-                for audio_file in audio:
-                    text = await transcriber.transcribe(audio_file)
-                    if text:
-                        transcriptions.append(text)
-                return " | ".join(transcriptions) if transcriptions else ""
+        async def transcribe_all():
+            transcriptions = []
+            for audio_file in audio:
+                text = await transcriber.transcribe(audio_file)
+                if text:
+                    transcriptions.append(text)
+            return " | ".join(transcriptions) if transcriptions else ""
 
-            audio_transcription = asyncio.run(transcribe_all())
-            if audio_transcription:
-                console.print(f"[dim]Transcription: {audio_transcription[:100]}...[/dim]")
+        audio_transcription = asyncio.run(transcribe_all())
+        if audio_transcription:
+            console.print(f"[dim]Transcription: {audio_transcription[:100]}...[/dim]")
 
     # Show spinner when logs are off (no output to miss); skip when logs are on
     def _thinking_ctx():

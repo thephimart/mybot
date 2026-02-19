@@ -177,6 +177,14 @@ class ToolsConfig(BaseModel):
     mcp_servers: dict[str, MCPServerConfig] = Field(default_factory=dict)
 
 
+class TranscriberConfig(BaseModel):
+    """Transcription configuration for audio/voice messages."""
+
+    use_local: bool = True  # True = faster-whisper (local), False = Groq API
+    whisper_model: str = "base"  # tiny, base, small, medium, large-v3 (local only)
+    device: str = "cpu"  # cpu, cuda, auto (local only)
+
+
 class Config(BaseSettings):
     """Root configuration for mybot."""
 
@@ -185,6 +193,7 @@ class Config(BaseSettings):
     providers: ProvidersConfig = Field(default_factory=ProvidersConfig)
     gateway: GatewayConfig = Field(default_factory=GatewayConfig)
     tools: ToolsConfig = Field(default_factory=ToolsConfig)
+    transcriber: TranscriberConfig = Field(default_factory=TranscriberConfig)
 
     @property
     def workspace_path(self) -> Path:

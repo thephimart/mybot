@@ -323,9 +323,16 @@ class TelegramChannel(BaseChannel):
 
                 # Handle voice transcription
                 if media_type == "voice" or media_type == "audio":
-                    from mybot.providers.transcription import GroqTranscriptionProvider
+                    from mybot.config.loader import load_config
+                    from mybot.providers.transcription import get_transcriber
 
-                    transcriber = GroqTranscriptionProvider(api_key=self.groq_api_key)
+                    config = load_config()
+                    transcriber = get_transcriber(
+                        use_local=config.transcriber.use_local,
+                        whisper_model=config.transcriber.whisper_model,
+                        device=config.transcriber.device,
+                        groq_api_key=self.groq_api_key,
+                    )
                     transcription = await transcriber.transcribe(file_path)
                     if transcription:
                         logger.info(f"Transcribed {media_type}: {transcription[:50]}...")
