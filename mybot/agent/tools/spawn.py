@@ -53,11 +53,15 @@ class SpawnTool(Tool):
                 },
                 "model": {
                     "type": "string",
-                    "description": "Optional model override (e.g., 'gpt-4o'). If not set, uses main agent model",
+                    "description": "Optional model override (e.g., 'llama3.1'). If not set, uses main agent model",
+                },
+                "provider": {
+                    "type": "string",
+                    "description": "Optional provider override (e.g., 'llamacpp', 'ollama'). If not set, auto-detected from model/api_base",
                 },
                 "api_base": {
                     "type": "string",
-                    "description": "Optional API base URL override (e.g., 'http://localhost:11434'). If not set, uses main agent endpoint",
+                    "description": "Optional API base URL override (e.g., 'http://localhost:8080/v1'). If not set, uses main agent endpoint",
                 },
                 "api_key": {
                     "type": "string",
@@ -72,6 +76,7 @@ class SpawnTool(Tool):
         task: str,
         label: str | None = None,
         model: str | None = None,
+        provider: str | None = None,
         api_base: str | None = None,
         api_key: str | None = None,
         **kwargs: Any,
@@ -83,6 +88,7 @@ class SpawnTool(Tool):
             origin_channel=self._origin_channel,
             origin_chat_id=self._origin_chat_id,
             model=model,
+            provider_name=provider,
             api_base=api_base,
             api_key=api_key,
         )

@@ -68,6 +68,7 @@ class SubagentManager:
         model: str | None = None,
         api_base: str | None = None,
         api_key: str | None = None,
+        provider_name: str | None = None,
     ) -> str:
         """
         Spawn a subagent to execute a task in the background.
@@ -80,6 +81,7 @@ class SubagentManager:
             model: Optional model override.
             api_base: Optional API base URL override.
             api_key: Optional API key override.
+            provider_name: Optional provider name override (e.g., "llamacpp", "ollama").
 
         Returns:
             Status message indicating the subagent was started.
@@ -96,6 +98,7 @@ class SubagentManager:
         override_model = model or self.model
         override_api_base = api_base
         override_api_key = api_key
+        override_provider_name = provider_name
 
         # Create background task
         bg_task = asyncio.create_task(
@@ -107,6 +110,7 @@ class SubagentManager:
                 override_model,
                 override_api_base,
                 override_api_key,
+                override_provider_name,
             )
         )
         self._running_tasks[task_id] = bg_task
@@ -126,6 +130,7 @@ class SubagentManager:
         model: str,
         api_base: str | None = None,
         api_key: str | None = None,
+        provider_name: str | None = None,
     ) -> None:
         """Execute the subagent task and announce the result."""
         from mybot.providers.litellm_provider import LiteLLMProvider
@@ -133,11 +138,12 @@ class SubagentManager:
         logger.info(f"Subagent [{task_id}] starting task: {label}")
 
         # Create provider if overrides provided, else use main provider
-        if api_base or api_key:
+        if api_base or api_key or provider_name:
             provider = LiteLLMProvider(
                 api_key=api_key or self.provider.api_key,
                 api_base=api_base or self.provider.api_base,
                 default_model=model,
+                provider_name=provider_name,
             )
         else:
             provider = self.provider
