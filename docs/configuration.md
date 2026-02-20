@@ -152,8 +152,14 @@ See [Providers](providers.md) for details.
 
 ## transcriber
 
+Speech-to-text (STT) transcription for voice messages.
+
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| `use_local` | bool | true | true=faster-whisper, false=Groq |
-| `whisper_model` | string | base | tiny/base/small/medium/large-v3 |
-| `device` | string | cpu | cpu/cuda/auto |
+| `use_local` | bool | true | true=faster-whisper (local), false=Groq API |
+| `whisper_model` | string | base | Model size: tiny/base/small/medium/large-v3 |
+| `device` | string | cpu | Device: cpu/cuda/auto (local only) |
+
+**Providers:**
+- `use_local: true` → faster-whisper (runs locally, no API key)
+- `use_local: false` → Groq API (requires groq provider apiKey)

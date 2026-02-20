@@ -67,7 +67,8 @@ mybot intentionally includes only:
 
 - Agent loop (LLM ↔ tools)
 - Tool execution (file, shell, web search/fetch)
-- Vision, audio, and video support (multimodal models)
+- Vision support (any vision-enabled model via Telegram, CLI -i)
+- Speech-to-text (STT) via Telegram voice messages or CLI -a (local faster-whisper or Groq)
 - Persistent memory
 - Scheduling / cron
 - Heartbeat (periodic agent wake-up)
@@ -99,17 +100,25 @@ This is intentional.
 ## Project structure
 
 ```
-mybot/
-├── agent/        # Core agent loop, context, memory, tools
-├── tools/        # Built-in tools
-├── channels/     # Minimal I/O (Telegram, Email)
-├── cron/         # Scheduled tasks
-├── heartbeat/    # Periodic agent wake-up
-├── bus/          # Internal event routing
-├── providers/    # LLM providers
-├── config/       # Configuration models
-├── docs/         # Documentation
-└── cli/          # Command-line interface
+./
+├── docs/                  # Documentation
+├── mybot/                 # Core package
+│   ├── agent/             # Core agent loop, context, memory
+│   ├── bus/               # Internal event routing
+│   ├── channels/          # I/O channels (Telegram, Email)
+│   ├── cli/               # Command-line interface
+│   ├── config/            # Configuration models
+│   ├── cron/              # Scheduled tasks
+│   ├── heartbeat/         # Periodic agent wake-up
+│   ├── providers/         # LLM providers
+│   ├── session/           # Conversation history
+│   ├── skills/            # Built-in skills
+│   └── utils/             # Helper utilities
+├── tests/                 # Test suite
+├── workspace/             # Template files (created on onboard)
+├── LICENSE                # MIT License
+├── pyproject.toml        # Project metadata and dependencies
+└── README.md              # This file
 ```
 
 If a directory doesn't justify its existence, it shouldn't be here.

@@ -47,6 +47,18 @@ The bot responds to:
 - `/new` - Start new session
 - `/help` - Show help
 
+### Images and Photos
+
+Telegram supports sending images and photos to the bot. Any vision-enabled model
+(e.g., GPT-4o, Claude 4, Gemini) can analyze these images.
+
+### Voice Messages (STT)
+
+Voice messages are automatically transcribed using the configured transcriber
+(see [Configuration](configuration.md#transcriber)). Supports:
+- **Local**: faster-whisper (no API key required)
+- **Cloud**: Groq API (requires API key in groq provider config)
+
 ### Running
 
 ```bash
@@ -110,6 +122,10 @@ For Gmail, you need an "App Password":
 | `auto_reply_enabled` | Auto-reply to inbound emails |
 | `poll_interval_seconds` | How often to check for new emails |
 | `allow_from` | Only process emails from these senders |
+
+### Attachments
+
+Email attachments (images, audio) are processed. Audio attachments use the transcriber.
 
 ### Running
 
