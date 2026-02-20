@@ -842,6 +842,13 @@ def status():
         device = transcriber.get("device", "cpu")
         console.print(f"Transcriber: {trans_type} ({whisper_model}, {device})")
 
+        # Subagent config
+        subagents = cfg.get("agents", {}).get("subagents", {})
+        if subagents.get("model") or subagents.get("provider"):
+            sub_model = subagents.get("model", "<inherited>")
+            sub_provider = subagents.get("provider", "<inherited>")
+            console.print(f"Subagent: {sub_model} @ {sub_provider}")
+
         providers = cfg.get("providers", {})
         for spec in PROVIDERS:
             parts = spec.name.split("_")
