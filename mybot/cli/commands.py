@@ -819,8 +819,8 @@ def status():
     workspace_ok = workspace != "<unset>" and Path(workspace).expanduser().exists()
 
     console.print(f"{__logo__} mybot Status\n")
-    console.print(f"config: {config_path} {'✓' if config_path.exists() else '✗'}")
-    console.print(f"workspace: {Path(workspace).expanduser()} {'✓' if workspace_ok else '✗'}")
+    console.print(f"Config: {config_path} {'✓' if config_path.exists() else '✗'}")
+    console.print(f"Workspace: {Path(workspace).expanduser()} {'✓' if workspace_ok else '✗'}")
 
     if config_path.exists():
         from mybot.providers.registry import PROVIDERS
@@ -828,22 +828,23 @@ def status():
         defaults = cfg.get("agents", {}).get("defaults", {})
         model = defaults.get("model", "<unset>")
         provider = defaults.get("provider", "<unset>")
-        console.print(f"agent model: {model}")
-        console.print(f"agent provider: {provider}")
+        console.print(f"Agent Model: {model}")
+        console.print(f"Agent Provider: {provider}")
 
         # Subagent config
         subagents = cfg.get("agents", {}).get("subagents", {})
         sub_model = subagents.get("model") or "<inherited>"
         sub_provider = subagents.get("provider") or "<inherited>"
-        console.print(f"subagent model: {sub_model}")
-        console.print(f"subagent provider: {sub_provider}")
+        console.print(f"Subagent Model: {sub_model}")
+        console.print(f"Subagent Provider: {sub_provider}")
 
         transcriber = cfg.get("transcriber", {})
         trans_type = "local" if transcriber.get("useLocal") else "groq"
         whisper_model = transcriber.get("whisperModel", "base")
         device = transcriber.get("device", "cpu")
-        console.print(f"transcriber: {trans_type} ({whisper_model}, {device})")
+        console.print(f"Transcriber: {trans_type} ({whisper_model}, {device})")
 
+        console.print("Configured Providers:")
         providers = cfg.get("providers", {})
         for spec in PROVIDERS:
             parts = spec.name.split("_")
@@ -853,9 +854,9 @@ def status():
             has_base = bool(p.get("apiBase"))
             if has_key or has_base:
                 if has_base:
-                    console.print(f"{spec.label}: ✓ {p.get('apiBase')}")
+                    console.print(f"  {spec.label}: ✓ {p.get('apiBase')}")
                 else:
-                    console.print(f"{spec.label}: ✓")
+                    console.print(f"  {spec.label}: ✓")
 
 
 # ============================================================================
