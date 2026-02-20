@@ -126,8 +126,6 @@ class SubagentManager:
 
         # Provider settings resolved at runtime via get_subagent_settings()
         self._subagent_provider_name = subagent_cfg.provider
-        self._subagent_api_key: str | None = None
-        self._subagent_api_base: str | None = None
 
         self.exec_config = exec_config or ExecToolConfig()
         self.restrict_to_workspace = restrict_to_workspace
@@ -216,12 +214,8 @@ class SubagentManager:
 
         # Determine provider: explicit param > raw config > subagent config > main agent
         effective_provider_name = provider_name or raw_provider_name or self._subagent_provider_name
-        effective_api_key = (
-            api_key or raw_api_key or self._subagent_api_key or self.provider.api_key
-        )
-        effective_api_base = (
-            api_base or raw_api_base or self._subagent_api_base or self.provider.api_base
-        )
+        effective_api_key = api_key or raw_api_key or self.provider.api_key
+        effective_api_base = api_base or raw_api_base or self.provider.api_base
 
         if not effective_provider_name:
             logger.warning("Subagent provider not resolved; using main agent provider")
