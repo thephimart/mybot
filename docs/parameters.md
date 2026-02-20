@@ -141,9 +141,9 @@ These parameters are specific to certain providers and may not work with all pro
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-|` | int | Maximum new tokens to generate. |
+| `max_new_tokens` | int | Maximum new tokens to generate. |
 | `temperature` | float | Sampling temperature. |
-| `top_p` | float | Nucleus `max_new_tokens sampling. |
+| `top_p` | float | Nucleus sampling. |
 | `webhook` | string | Webhook URL for async completion. |
 
 ### Petals

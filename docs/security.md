@@ -124,7 +124,7 @@ pip install pip-audit
 pip-audit
 ```
 
-Remove dependencies you don’t need.
+Remove dependencies you don't need.
 Fewer dependencies = smaller attack surface.
 
 ---
@@ -137,7 +137,7 @@ If your fork exposes messaging channels:
 * Do not leave public endpoints open by default
 * Log access attempts where possible
 
-If you don’t need remote interaction, **remove channels entirely**.
+If you don't need remote interaction, **remove channels entirely**.
 
 ---
 
@@ -189,7 +189,7 @@ Security in mybot comes from:
 * local control
 * informed operators
 
-If you don’t understand what your bot can do, it is not secure.
+If you don't understand what your bot can do, it is not secure.
 
 ---
 
