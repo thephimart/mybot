@@ -817,7 +817,8 @@ def status():
 
     if not config_path.exists():
         console.print(
-            f"Config: {config_path} ✗\nRun [bold]mybot onboard[/bold] to create a default config."
+            f"Config: {config_path} ✗\n"
+            "Run [bold]mybot onboard[/bold] to create default [bold]config.json[/bold]."
         )
         return
 
