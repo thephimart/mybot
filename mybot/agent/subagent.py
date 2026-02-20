@@ -62,10 +62,19 @@ class SubagentManager:
         self._subagent_api_base: str | None = None
 
         if subagent_cfg.provider and config:
-            provider_cfg = getattr(config.providers, subagent_cfg.provider, None)
-            if provider_cfg:
-                self._subagent_api_key = provider_cfg.api_key or None
-                self._subagent_api_base = provider_cfg.api_base or None
+            # Use same logic as main agent: config.get_provider_name/get_api_base
+            # This handles both explicit api_base and defaults from registry
+            original_provider = config.agents.defaults.provider
+            original_model = config.agents.defaults.model
+
+            config.agents.defaults.provider = subagent_cfg.provider
+            config.agents.defaults.model = self.model
+
+            self._subagent_api_key = config.get_api_key()
+            self._subagent_api_base = config.get_api_base()
+
+            config.agents.defaults.provider = original_provider
+            config.agents.defaults.model = original_model
 
         self.exec_config = exec_config or ExecToolConfig()
         self.restrict_to_workspace = restrict_to_workspace

@@ -76,7 +76,11 @@ class LiteLLMProvider(LLMProvider):
     def _resolve_model(self, model: str) -> str:
         """Resolve model name by applying provider/gateway prefixes."""
         if self._gateway:
-            # Gateway mode: apply gateway prefix, skip provider-specific prefixes
+            # Local providers with strip_model_prefix=True (llamacpp, lmstudio)
+            # use OpenAI-compatible API - pass model as-is
+            if self._gateway.is_local and self._gateway.strip_model_prefix:
+                return model
+            # Otherwise apply gateway prefix
             prefix = self._gateway.litellm_prefix
             if self._gateway.strip_model_prefix:
                 model = model.split("/")[-1]
