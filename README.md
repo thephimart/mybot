@@ -209,6 +209,15 @@ If the codebase starts growing without a very good reason, something has gone wr
 
 ---
 
+## Future integrations (exploring)
+
+- **Local TTS** - Text-to-speech using [kokoro](https://pypi.org/project/kokoro/) (runs locally)
+- **Local image generation** - Image generation using [stable-diffusion-cpp-python](https://pypi.org/project/stable-diffusion-cpp-python/)
+
+Under research/evaluation.
+
+---
+
 ## Origin & attribution
 
 mybot began as a **heavily reduced refactor** of the open-source project **nanobot**.
