@@ -819,12 +819,8 @@ def status():
     workspace_ok = workspace != "<unset>" and Path(workspace).expanduser().exists()
 
     console.print(f"{__logo__} mybot Status\n")
-    console.print(
-        f"Config: {config_path} {'[green]✓[/green]' if config_path.exists() else '[red]✗[/red]'}"
-    )
-    console.print(
-        f"Workspace: {workspace} {'[green]✓[/green]' if workspace_ok else '[red]✗[/red]'}"
-    )
+    console.print(f"config: {config_path} {'✓' if config_path.exists() else '✗'}")
+    console.print(f"workspace: {Path(workspace).expanduser()} {'✓' if workspace_ok else '✗'}")
 
     if config_path.exists():
         from mybot.providers.registry import PROVIDERS
@@ -832,22 +828,21 @@ def status():
         defaults = cfg.get("agents", {}).get("defaults", {})
         model = defaults.get("model", "<unset>")
         provider = defaults.get("provider", "<unset>")
-        console.print(f"Model: {model}")
-        if provider != "<unset>":
-            console.print(f"Provider: {provider}")
+        console.print(f"agent model: {model}")
+        console.print(f"agent provider: {provider}")
+
+        # Subagent config
+        subagents = cfg.get("agents", {}).get("subagents", {})
+        sub_model = subagents.get("model") or "<inherited>"
+        sub_provider = subagents.get("provider") or "<inherited>"
+        console.print(f"subagent model: {sub_model}")
+        console.print(f"subagent provider: {sub_provider}")
 
         transcriber = cfg.get("transcriber", {})
         trans_type = "local" if transcriber.get("useLocal") else "groq"
         whisper_model = transcriber.get("whisperModel", "base")
         device = transcriber.get("device", "cpu")
-        console.print(f"Transcriber: {trans_type} ({whisper_model}, {device})")
-
-        # Subagent config
-        subagents = cfg.get("agents", {}).get("subagents", {})
-        if subagents.get("model") or subagents.get("provider"):
-            sub_model = subagents.get("model", "<inherited>")
-            sub_provider = subagents.get("provider", "<inherited>")
-            console.print(f"Subagent: {sub_model} @ {sub_provider}")
+        console.print(f"transcriber: {trans_type} ({whisper_model}, {device})")
 
         providers = cfg.get("providers", {})
         for spec in PROVIDERS:
@@ -858,9 +853,9 @@ def status():
             has_base = bool(p.get("apiBase"))
             if has_key or has_base:
                 if has_base:
-                    console.print(f"{spec.label}: [green]✓ {p.get('apiBase')}[/green]")
+                    console.print(f"{spec.label}: ✓ {p.get('apiBase')}")
                 else:
-                    console.print(f"{spec.label}: [green]✓[/green]")
+                    console.print(f"{spec.label}: ✓")
 
 
 # ============================================================================
