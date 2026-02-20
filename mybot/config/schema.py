@@ -120,38 +120,10 @@ class WebSearchConfig(BaseModel):
     max_results: int = 5
 
 
-class ImageSearchConfig(BaseModel):
-    """Web image search configuration."""
-
-    max_results: int = 5
-
-
-class VideoSearchConfig(BaseModel):
-    """Web video search configuration."""
-
-    max_results: int = 5
-
-
-class NewsSearchConfig(BaseModel):
-    """Web news search configuration."""
-
-    max_results: int = 5
-
-
-class BooksSearchConfig(BaseModel):
-    """Web books search configuration."""
-
-    max_results: int = 5
-
-
 class WebToolsConfig(BaseModel):
     """Web tools configuration."""
 
     search: WebSearchConfig = Field(default_factory=WebSearchConfig)
-    images: ImageSearchConfig = Field(default_factory=ImageSearchConfig)
-    videos: VideoSearchConfig = Field(default_factory=VideoSearchConfig)
-    news: NewsSearchConfig = Field(default_factory=NewsSearchConfig)
-    books: BooksSearchConfig = Field(default_factory=BooksSearchConfig)
 
 
 class ExecToolConfig(BaseModel):
@@ -174,7 +146,7 @@ class ToolsConfig(BaseModel):
 
     web: WebToolsConfig = Field(default_factory=WebToolsConfig)
     exec: ExecToolConfig = Field(default_factory=ExecToolConfig)
-    restrict_to_workspace: bool = False  # If true, restrict all tool access to workspace directory
+    restrict_to_workspace: bool = True  # If true, restrict all tool access to workspace directory
     mcp_servers: dict[str, MCPServerConfig] = Field(default_factory=dict)
 
 

@@ -50,12 +50,13 @@ class AgentLoop:
         max_tokens: int = 4096,
         memory_window: int = 50,
         exec_config: "ExecToolConfig | None" = None,
+        web_config: "WebToolsConfig | None" = None,
         cron_service: "CronService | None" = None,
         restrict_to_workspace: bool = False,
         session_manager: SessionManager | None = None,
         mcp_servers: dict | None = None,
     ):
-        from mybot.config.schema import ExecToolConfig
+        from mybot.config.schema import ExecToolConfig, WebToolsConfig
 
         self.bus = bus
         self.provider = provider
@@ -66,6 +67,7 @@ class AgentLoop:
         self.max_tokens = max_tokens
         self.memory_window = memory_window
         self.exec_config = exec_config or ExecToolConfig()
+        self.web_config = web_config or WebToolsConfig()
         self.cron_service = cron_service
         self.restrict_to_workspace = restrict_to_workspace
 
@@ -108,7 +110,7 @@ class AgentLoop:
         )
 
         # Web tools
-        self.tools.register(WebSearchTool())
+        self.tools.register(WebSearchTool(max_results=self.web_config.search.max_results))
         self.tools.register(WebFetchTool())
 
         # Message tool
