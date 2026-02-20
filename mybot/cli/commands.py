@@ -812,51 +812,58 @@ def status():
     from mybot.config.loader import get_config_path
 
     config_path = get_config_path()
+
+    console.print(f"{__logo__} mybot Status\n")
+
+    if not config_path.exists():
+        console.print(
+            f"Config: {config_path} ✗\nRun [bold]mybot onboard[/bold] to create a default config."
+        )
+        return
+
     with open(config_path) as f:
         cfg = json.load(f)
 
     workspace = cfg.get("agents", {}).get("defaults", {}).get("workspace", "<unset>")
     workspace_ok = workspace != "<unset>" and Path(workspace).expanduser().exists()
 
-    console.print(f"{__logo__} mybot Status\n")
-    console.print(f"Config: {config_path} {'✓' if config_path.exists() else '✗'}")
+    console.print(f"Config: {config_path} ✓")
     console.print(f"Workspace: {Path(workspace).expanduser()} {'✓' if workspace_ok else '✗'}")
 
-    if config_path.exists():
-        from mybot.providers.registry import PROVIDERS
+    from mybot.providers.registry import PROVIDERS
 
-        defaults = cfg.get("agents", {}).get("defaults", {})
-        model = defaults.get("model", "<unset>")
-        provider = defaults.get("provider", "<unset>")
-        console.print(f"Agent Model: {model}")
-        console.print(f"Agent Provider: {provider}")
+    defaults = cfg.get("agents", {}).get("defaults", {})
+    model = defaults.get("model", "<unset>")
+    provider = defaults.get("provider", "<unset>")
+    console.print(f"Agent Model: {model}")
+    console.print(f"Agent Provider: {provider}")
 
-        # Subagent config
-        subagents = cfg.get("agents", {}).get("subagents", {})
-        sub_model = subagents.get("model") or "<inherited>"
-        sub_provider = subagents.get("provider") or "<inherited>"
-        console.print(f"Subagent Model: {sub_model}")
-        console.print(f"Subagent Provider: {sub_provider}")
+    # Subagent config
+    subagents = cfg.get("agents", {}).get("subagents", {})
+    sub_model = subagents.get("model") or "<inherited>"
+    sub_provider = subagents.get("provider") or "<inherited>"
+    console.print(f"Subagent Model: {sub_model}")
+    console.print(f"Subagent Provider: {sub_provider}")
 
-        transcriber = cfg.get("transcriber", {})
-        trans_type = "local" if transcriber.get("useLocal") else "groq"
-        whisper_model = transcriber.get("whisperModel", "base")
-        device = transcriber.get("device", "cpu")
-        console.print(f"Transcriber: {trans_type} ({whisper_model}, {device})")
+    transcriber = cfg.get("transcriber", {})
+    trans_type = "local" if transcriber.get("useLocal") else "groq"
+    whisper_model = transcriber.get("whisperModel", "base")
+    device = transcriber.get("device", "cpu")
+    console.print(f"Transcriber: {trans_type} ({whisper_model}, {device})")
 
-        console.print("Configured Providers:")
-        providers = cfg.get("providers", {})
-        for spec in PROVIDERS:
-            parts = spec.name.split("_")
-            key = parts[0] + "".join(p.title() for p in parts[1:])  # nvidia_nim → nvidiaNim
-            p = providers.get(key, {})
-            has_key = bool(p.get("apiKey"))
-            has_base = bool(p.get("apiBase"))
-            if has_key or has_base:
-                if has_base:
-                    console.print(f"  {spec.label}: ✓ {p.get('apiBase')}")
-                else:
-                    console.print(f"  {spec.label}: ✓")
+    console.print("Configured Providers:")
+    providers = cfg.get("providers", {})
+    for spec in PROVIDERS:
+        parts = spec.name.split("_")
+        key = parts[0] + "".join(p.title() for p in parts[1:])  # nvidia_nim → nvidiaNim
+        p = providers.get(key, {})
+        has_key = bool(p.get("apiKey"))
+        has_base = bool(p.get("apiBase"))
+        if has_key or has_base:
+            if has_base:
+                console.print(f"  {spec.label}: ✓ {p.get('apiBase')}")
+            else:
+                console.print(f"  {spec.label}: ✓")
 
 
 # ============================================================================
