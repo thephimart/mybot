@@ -42,6 +42,11 @@ class MessageTool(Tool):
             "type": "object",
             "properties": {
                 "content": {"type": "string", "description": "The message content to send"},
+                "media": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Optional: list of file paths to send as media (images, audio, voice, documents)",
+                },
                 "channel": {
                     "type": "string",
                     "description": "Optional: target channel (telegram, email)",
@@ -52,7 +57,12 @@ class MessageTool(Tool):
         }
 
     async def execute(
-        self, content: str, channel: str | None = None, chat_id: str | None = None, **kwargs: Any
+        self,
+        content: str,
+        media: list[str] | None = None,
+        channel: str | None = None,
+        chat_id: str | None = None,
+        **kwargs: Any,
     ) -> str:
         channel = channel or self._default_channel
         chat_id = chat_id or self._default_chat_id
@@ -63,7 +73,7 @@ class MessageTool(Tool):
         if not self._send_callback:
             return "Error: Message sending not configured"
 
-        msg = OutboundMessage(channel=channel, chat_id=chat_id, content=content)
+        msg = OutboundMessage(channel=channel, chat_id=chat_id, content=content, media=media or [])
 
         try:
             await self._send_callback(msg)

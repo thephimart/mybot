@@ -228,6 +228,12 @@ class TelegramChannel(BaseChannel):
             logger.error(f"Invalid chat_id: {msg.chat_id}")
             return
 
+        # Handle media files
+        if msg.media:
+            await self._send_media(chat_id, msg.content, msg.media)
+            return
+
+        # Text-only messages
         for chunk in _split_message(msg.content):
             try:
                 html = _markdown_to_telegram_html(chunk)
@@ -238,6 +244,46 @@ class TelegramChannel(BaseChannel):
                     await self._app.bot.send_message(chat_id=chat_id, text=chunk)
                 except Exception as e2:
                     logger.error(f"Error sending Telegram message: {e2}")
+
+    async def _send_media(self, chat_id: int, caption: str, media_paths: list[str]) -> None:
+        """Send media files (images, audio, voice, documents) to Telegram."""
+        from pathlib import Path
+
+        for path in media_paths:
+            p = Path(path)
+            if not p.exists():
+                logger.warning(f"Media file not found: {path}")
+                continue
+
+            ext = p.suffix.lower()
+            try:
+                if ext in {".jpg", ".jpeg", ".png", ".gif", ".webp"}:
+                    await self._app.bot.send_photo(
+                        chat_id=chat_id,
+                        photo=p,
+                        caption=caption[:1024] if caption else None,
+                    )
+                elif ext == ".ogg":
+                    await self._app.bot.send_voice(
+                        chat_id=chat_id,
+                        voice=p,
+                        caption=caption[:1024] if caption else None,
+                    )
+                elif ext in {".mp3", ".m4a", ".wav", ".flac"}:
+                    await self._app.bot.send_audio(
+                        chat_id=chat_id,
+                        audio=p,
+                        caption=caption[:1024] if caption else None,
+                    )
+                else:
+                    await self._app.bot.send_document(
+                        chat_id=chat_id,
+                        document=p,
+                        caption=caption[:1024] if caption else None,
+                    )
+                caption = ""  # Only send caption with first media item
+            except Exception as e:
+                logger.error(f"Error sending media {path}: {e}")
 
     async def _on_start(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle /start command."""
