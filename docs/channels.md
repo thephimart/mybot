@@ -123,10 +123,6 @@ For Gmail, you need an "App Password":
 | `poll_interval_seconds` | How often to check for new emails |
 | `allow_from` | Only process emails from these senders |
 
-### Attachments
-
-Email attachments (images, audio) are processed. Audio attachments use the transcriber.
-
 ### Running
 
 ```bash
