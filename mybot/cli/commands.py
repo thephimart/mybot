@@ -299,6 +299,7 @@ def gateway(
         restrict_to_workspace=config.tools.restrict_to_workspace,
         session_manager=session_manager,
         mcp_servers=config.tools.mcp_servers,
+        subagent_config=config.agents.subagents,
     )
 
     # Set cron callback (needs agent)
@@ -421,6 +422,7 @@ def agent(
         exec_config=config.tools.exec,
         restrict_to_workspace=config.tools.restrict_to_workspace,
         mcp_servers=config.tools.mcp_servers,
+        subagent_config=config.agents.subagents,
     )
 
     # Download URL images to local files (same workflow as Telegram)

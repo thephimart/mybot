@@ -70,10 +70,21 @@ class AgentDefaults(BaseModel):
     memory_window: int = 50
 
 
+class SubagentDefaults(BaseModel):
+    """Subagent configuration. All None = inherit from main agent."""
+
+    model: str | None = None
+    provider: str | None = None
+    max_tokens: int | None = None
+    temperature: float | None = None
+    max_tool_iterations: int | None = None
+
+
 class AgentsConfig(BaseModel):
     """Agent configuration."""
 
     defaults: AgentDefaults = Field(default_factory=AgentDefaults)
+    subagents: SubagentDefaults = Field(default_factory=SubagentDefaults)
 
 
 class ProviderConfig(BaseModel):

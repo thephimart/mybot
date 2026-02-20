@@ -51,15 +51,38 @@ class SpawnTool(Tool):
                     "type": "string",
                     "description": "Optional short label for the task (for display)",
                 },
+                "model": {
+                    "type": "string",
+                    "description": "Optional model override (e.g., 'gpt-4o'). If not set, uses main agent model",
+                },
+                "api_base": {
+                    "type": "string",
+                    "description": "Optional API base URL override (e.g., 'http://localhost:11434'). If not set, uses main agent endpoint",
+                },
+                "api_key": {
+                    "type": "string",
+                    "description": "Optional API key override. If not set, uses main agent API key",
+                },
             },
             "required": ["task"],
         }
 
-    async def execute(self, task: str, label: str | None = None, **kwargs: Any) -> str:
+    async def execute(
+        self,
+        task: str,
+        label: str | None = None,
+        model: str | None = None,
+        api_base: str | None = None,
+        api_key: str | None = None,
+        **kwargs: Any,
+    ) -> str:
         """Spawn a subagent to execute the given task."""
         return await self._manager.spawn(
             task=task,
             label=label,
             origin_channel=self._origin_channel,
             origin_chat_id=self._origin_chat_id,
+            model=model,
+            api_base=api_base,
+            api_key=api_key,
         )

@@ -37,17 +37,24 @@ class SubagentManager:
         model: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 4096,
+        max_iterations: int = 15,
         exec_config: "ExecToolConfig | None" = None,
         restrict_to_workspace: bool = False,
+        subagent_config: "SubagentDefaults | None" = None,
     ):
-        from mybot.config.schema import ExecToolConfig
+        from mybot.config.schema import ExecToolConfig, SubagentDefaults
 
         self.provider = provider
         self.workspace = workspace
         self.bus = bus
-        self.model = model or provider.get_default_model()
-        self.temperature = temperature
-        self.max_tokens = max_tokens
+
+        # Resolve settings: subagent config overrides, else use main agent values
+        subagent_cfg = subagent_config or SubagentDefaults()
+        self.model = subagent_cfg.model if subagent_cfg.model else (model or provider.get_default_model())
+        self.temperature = subagent_cfg.temperature if subagent_cfg.temperature is not None else temperature
+        self.max_tokens = subagent_cfg.max_tokens if subagent_cfg.max_tokens else max_tokens
+        self.max_iterations = subagent_cfg.max_tool_iterations if subagent_cfg.max_tool_iterations else max_iterations
+
         self.exec_config = exec_config or ExecToolConfig()
         self.restrict_to_workspace = restrict_to_workspace
         self._running_tasks: dict[str, asyncio.Task[None]] = {}
@@ -58,6 +65,9 @@ class SubagentManager:
         label: str | None = None,
         origin_channel: str = "cli",
         origin_chat_id: str = "direct",
+        model: str | None = None,
+        api_base: str | None = None,
+        api_key: str | None = None,
     ) -> str:
         """
         Spawn a subagent to execute a task in the background.
@@ -67,6 +77,9 @@ class SubagentManager:
             label: Optional human-readable label for the task.
             origin_channel: The channel to announce results to.
             origin_chat_id: The chat ID to announce results to.
+            model: Optional model override.
+            api_base: Optional API base URL override.
+            api_key: Optional API key override.
 
         Returns:
             Status message indicating the subagent was started.
@@ -79,8 +92,23 @@ class SubagentManager:
             "chat_id": origin_chat_id,
         }
 
+        # Override settings: explicit params > subagent config > main agent
+        override_model = model or self.model
+        override_api_base = api_base
+        override_api_key = api_key
+
         # Create background task
-        bg_task = asyncio.create_task(self._run_subagent(task_id, task, display_label, origin))
+        bg_task = asyncio.create_task(
+            self._run_subagent(
+                task_id,
+                task,
+                display_label,
+                origin,
+                override_model,
+                override_api_base,
+                override_api_key,
+            )
+        )
         self._running_tasks[task_id] = bg_task
 
         # Cleanup when done
@@ -95,9 +123,24 @@ class SubagentManager:
         task: str,
         label: str,
         origin: dict[str, str],
+        model: str,
+        api_base: str | None = None,
+        api_key: str | None = None,
     ) -> None:
         """Execute the subagent task and announce the result."""
+        from mybot.providers.litellm_provider import LiteLLMProvider
+
         logger.info(f"Subagent [{task_id}] starting task: {label}")
+
+        # Create provider if overrides provided, else use main provider
+        if api_base or api_key:
+            provider = LiteLLMProvider(
+                api_key=api_key or self.provider.api_key,
+                api_base=api_base or self.provider.api_base,
+                default_model=model,
+            )
+        else:
+            provider = self.provider
 
         try:
             # Build subagent tools (no message tool, no spawn tool)
@@ -125,17 +168,16 @@ class SubagentManager:
             ]
 
             # Run agent loop (limited iterations)
-            max_iterations = 15
             iteration = 0
             final_result: str | None = None
 
-            while iteration < max_iterations:
+            while iteration < self.max_iterations:
                 iteration += 1
 
-                response = await self.provider.chat(
+                response = await provider.chat(
                     messages=messages,
                     tools=tools.get_definitions(),
-                    model=self.model,
+                    model=model,
                     temperature=self.temperature,
                     max_tokens=self.max_tokens,
                 )
