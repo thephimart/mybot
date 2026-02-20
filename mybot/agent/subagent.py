@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import os
 import uuid
 from pathlib import Path
 from typing import Any
@@ -18,6 +19,62 @@ from mybot.agent.tools.web import (
 from mybot.bus.events import InboundMessage
 from mybot.bus.queue import MessageBus
 from mybot.providers.base import LLMProvider
+
+
+def get_subagent_settings():
+    """
+    Robustly loads sub-agent settings by reading config.json directly.
+    Returns: (provider_name, api_base, api_key)
+    """
+    config_path = os.path.expanduser("~/.mybot/config.json")
+
+    provider_name = None
+    api_base = None
+    api_key = None
+
+    try:
+        with open(config_path, "r") as f:
+            raw_config = json.load(f)
+
+        sub_cfg = raw_config.get("agents", {}).get("subagents", {})
+
+        if not sub_cfg:
+            sub_cfg = raw_config.get("subagents", {})
+
+        if sub_cfg:
+            provider_name = sub_cfg.get("provider")
+            api_base = sub_cfg.get("api_base") or sub_cfg.get("apiBase")
+            api_key = sub_cfg.get("api_key") or sub_cfg.get("apiKey")
+
+        if provider_name and not api_base:
+            providers = raw_config.get("providers", {})
+            provider_cfg = providers.get(provider_name, {})
+            api_base = provider_cfg.get("apiBase") or provider_cfg.get("api_base")
+
+        if not api_base and provider_name:
+            raise RuntimeError(
+                f"Local provider '{provider_name}' requires api_base but none configured in config.json"
+            )
+
+        if not api_key and provider_name:
+            defaults = raw_config.get("agents", {}).get("defaults", {})
+            if defaults.get("provider") == provider_name:
+                api_key = defaults.get("api_key")
+
+            if not api_key and provider_name in raw_config.get("providers", {}):
+                api_key = raw_config["providers"][provider_name].get("api_key") or raw_config[
+                    "providers"
+                ][provider_name].get("apiKey")
+
+        if api_base and "192.168" in api_base:
+            api_key = api_key or "not-needed"
+
+        logger.info(f"Subagent Settings Resolved: provider={provider_name}, base={api_base}")
+        return provider_name, api_base, api_key
+
+    except Exception as e:
+        logger.error(f"Subagent: Failed to load settings from config.json: {e}")
+        return None, None, None
 
 
 class SubagentManager:
@@ -41,9 +98,8 @@ class SubagentManager:
         exec_config: "ExecToolConfig | None" = None,
         restrict_to_workspace: bool = False,
         subagent_config: "SubagentDefaults | None" = None,
-        config: "Config | None" = None,
     ):
-        from mybot.config.schema import Config, ExecToolConfig, SubagentDefaults
+        from mybot.config.schema import ExecToolConfig, SubagentDefaults
 
         self.provider = provider
         self.workspace = workspace
@@ -51,30 +107,21 @@ class SubagentManager:
 
         # Resolve settings: subagent config overrides, else use main agent values
         subagent_cfg = subagent_config or SubagentDefaults()
-        self.model = subagent_cfg.model if subagent_cfg.model else (model or provider.get_default_model())
-        self.temperature = subagent_cfg.temperature if subagent_cfg.temperature is not None else temperature
+        self.model = (
+            subagent_cfg.model if subagent_cfg.model else (model or provider.get_default_model())
+        )
+        self.temperature = (
+            subagent_cfg.temperature if subagent_cfg.temperature is not None else temperature
+        )
         self.max_tokens = subagent_cfg.max_tokens if subagent_cfg.max_tokens else max_tokens
-        self.max_iterations = subagent_cfg.max_tool_iterations if subagent_cfg.max_tool_iterations else max_iterations
+        self.max_iterations = (
+            subagent_cfg.max_tool_iterations if subagent_cfg.max_tool_iterations else max_iterations
+        )
 
-        # Resolve provider settings from config if provider specified in subagent config
+        # Provider settings resolved at runtime via get_subagent_settings()
         self._subagent_provider_name = subagent_cfg.provider
         self._subagent_api_key: str | None = None
         self._subagent_api_base: str | None = None
-
-        if subagent_cfg.provider and config:
-            # Use same logic as main agent: config.get_provider_name/get_api_base
-            # This handles both explicit api_base and defaults from registry
-            original_provider = config.agents.defaults.provider
-            original_model = config.agents.defaults.model
-
-            config.agents.defaults.provider = subagent_cfg.provider
-            config.agents.defaults.model = self.model
-
-            self._subagent_api_key = config.get_api_key()
-            self._subagent_api_base = config.get_api_base()
-
-            config.agents.defaults.provider = original_provider
-            config.agents.defaults.model = original_model
 
         self.exec_config = exec_config or ExecToolConfig()
         self.restrict_to_workspace = restrict_to_workspace
@@ -158,10 +205,20 @@ class SubagentManager:
 
         logger.info(f"Subagent [{task_id}] starting task: {label}")
 
-        # Determine provider: explicit param > subagent config > main agent
-        effective_provider_name = provider_name or self._subagent_provider_name
-        effective_api_key = api_key or self._subagent_api_key or self.provider.api_key
-        effective_api_base = api_base or self._subagent_api_base or self.provider.api_base
+        # Get settings from config.json directly (bypasses Config class issues)
+        raw_provider_name, raw_api_base, raw_api_key = get_subagent_settings()
+
+        # Determine provider: explicit param > raw config > subagent config > main agent
+        effective_provider_name = provider_name or raw_provider_name or self._subagent_provider_name
+        effective_api_key = (
+            api_key or raw_api_key or self._subagent_api_key or self.provider.api_key
+        )
+        effective_api_base = (
+            api_base or raw_api_base or self._subagent_api_base or self.provider.api_base
+        )
+
+        if not effective_provider_name:
+            logger.warning("Subagent provider not resolved; using main agent provider")
 
         # Create provider if overrides provided, else use main provider
         if effective_provider_name or effective_api_base or effective_api_key:

@@ -72,7 +72,9 @@ class AgentLoop:
         self.web_config = web_config or WebToolsConfig()
         self.cron_service = cron_service
         self.restrict_to_workspace = restrict_to_workspace
-        self.subagent_config = subagent_config or SubagentDefaults()
+        self.subagent_config = subagent_config or (
+            config.agents.subagents if config and config.agents.subagents else SubagentDefaults()
+        )
         self.config = config
 
         self.context = ContextBuilder(workspace)
@@ -89,7 +91,6 @@ class AgentLoop:
             exec_config=self.exec_config,
             restrict_to_workspace=self.restrict_to_workspace,
             subagent_config=self.subagent_config,
-            config=config,
         )
 
         self._running = False

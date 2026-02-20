@@ -1,6 +1,6 @@
 [project]
 name = "mybot"
-version = "0.4.0-dev"
+version = "0.4.0.dev"
 description = "A minimal bot core"
 requires-python = ">=3.11"
 license = {text = "MIT"}
@@ -38,6 +38,8 @@ dependencies = [
     "ddgs>=3.0.0",
     "faster-whisper>=1.0.0",
     "onnxruntime-gpu>=1.0.0",
+    "kokoro>=0.9.4",
+    "soundfile",
 ]
 
 [project.optional-dependencies]
