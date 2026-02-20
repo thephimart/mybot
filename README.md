@@ -33,10 +33,10 @@ mybot is meant to live inside *your* repo, *your* environment, *your* constraint
 - A batteries-included assistant
 - A platform or ecosystem
 - A SaaS product
-- A “supports everything” chatbot
+- A "supports everything" chatbot
 - A place to pile on integrations
 
-If you’re looking for feature checklists, this project is not for you.
+If you're looking for feature checklists, this project is not for you.
 
 ---
 
@@ -66,17 +66,17 @@ If you’re looking for feature checklists, this project is not for you.
 mybot intentionally includes only:
 
 - Agent loop (LLM ↔ tools)
-- Tool execution (including web, image, video, news, and book search)
-- Vision, audio, and video support (for multimodal models like GPT-4o, Claude 4, Gemini)
+- Tool execution (file, shell, web search/fetch)
+- Vision, audio, and video support (multimodal models)
 - Persistent memory
 - Scheduling / cron
+- Heartbeat (periodic agent wake-up)
 - Minimal channels:
   - Telegram
   - Email
-- Simple configuration
 - CLI for local operation
 
-Nothing else is considered “core”.
+Nothing else is considered "core".
 
 ---
 
@@ -84,17 +84,15 @@ Nothing else is considered “core”.
 
 mybot does **not** expose an HTTP API by default.
 
-The “gateway” is a **channel-driven runtime**, not a REST server. It coordinates:
+The "gateway" is a **channel-driven runtime**, not a REST server. It coordinates:
 - the agent loop
 - scheduling / cron
+- heartbeat
 - memory
 - enabled I/O channels (CLI, Telegram, Email)
 
 If no channel binds an external interface, no network port will be open.
 This is intentional.
-
-An HTTP ingress (e.g. `/message → agent loop`) may be added later as a new channel,
-but it is **not part of the core**.
 
 ---
 
@@ -106,13 +104,15 @@ mybot/
 ├── tools/        # Built-in tools
 ├── channels/     # Minimal I/O (Telegram, Email)
 ├── cron/         # Scheduled tasks
+├── heartbeat/    # Periodic agent wake-up
 ├── bus/          # Internal event routing
 ├── providers/    # LLM providers
 ├── config/       # Configuration models
+├── docs/         # Documentation
 └── cli/          # Command-line interface
 ```
 
-If a directory doesn’t justify its existence, it shouldn’t be here.
+If a directory doesn't justify its existence, it shouldn't be here.
 
 ---
 
@@ -120,21 +120,65 @@ If a directory doesn’t justify its existence, it shouldn’t be here.
 
 The intended workflow is:
 
-```text
-git clone mybot → rename → delete what you don’t need → build yourbot
+```
+git clone mybot → rename → delete what you don't need → build yourbot
 ```
 
 There is no official deployment story.
 There is no canonical configuration.
-There is no “recommended stack”.
+There is no "recommended stack".
 
 Those choices belong to you.
 
 ---
 
+## Quick Start (example)
+
+This is one way to get running — adapt as needed.
+
+```bash
+# Create virtual environment (recommended)
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Install
+pip install -e .
+
+# Initialize
+mybot onboard
+
+# Configure (edit ~/.mybot/config.json)
+# Add your API key and model
+
+# Run
+mybot agent -m "Hello!"
+```
+
+**Security note:** Run mybot in its own virtual environment. At worst, it can only break its own environment.
+
+---
+
+## Documentation
+
+- [Installation](docs/installation.md) - Setup and installation
+- [Quick Start](docs/quickstart.md) - First-time setup guide
+- [Configuration](docs/configuration.md) - Full config reference
+- [Providers](docs/providers.md) - LLM provider setup (18 providers)
+- [Channels](docs/channels.md) - Telegram and Email
+- [CLI](docs/cli.md) - Command reference
+- [Workspace](docs/workspace.md) - Bootstrap files (AGENTS.md, SOUL.md, etc.)
+- [Skills](docs/skills.md) - Extending agent capabilities
+- [Tools](docs/tools.md) - Tool configuration
+- [Cron](docs/cron.md) - Scheduled tasks
+- [Heartbeat](docs/heartbeat.md) - Periodic agent wake-up
+- [Security](docs/security.md) - Security best practices
+- [Parameters](docs/parameters.md) - LLM parameters
+
+---
+
 ## Local LLMs
 
-Local models (e.g. llama.cpp, Ollama, LM Studio) are supported via the `custom` provider.
+Local models (e.g. llama.cpp, Ollama, LM Studio) are supported.
 
 Routing is determined by the configured `apiBase`.
 If the endpoint does not require an API key, any non-empty value may be used.
@@ -177,9 +221,9 @@ Do whatever you want — just keep the notice.
 
 ## Final note
 
-If you’re wondering *“why doesn’t mybot support X?”*
+If you're wondering *"why doesn't mybot support X?"*
 The answer is probably:
 
-> Because **you** should add it — or decide you don’t need it.
+> Because **you** should add it — or decide you don't need it.
 
-That’s the point.
+That's the point.
