@@ -41,8 +41,9 @@ class SubagentManager:
         exec_config: "ExecToolConfig | None" = None,
         restrict_to_workspace: bool = False,
         subagent_config: "SubagentDefaults | None" = None,
+        config: "Config | None" = None,
     ):
-        from mybot.config.schema import ExecToolConfig, SubagentDefaults
+        from mybot.config.schema import Config, ExecToolConfig, SubagentDefaults
 
         self.provider = provider
         self.workspace = workspace
@@ -54,6 +55,17 @@ class SubagentManager:
         self.temperature = subagent_cfg.temperature if subagent_cfg.temperature is not None else temperature
         self.max_tokens = subagent_cfg.max_tokens if subagent_cfg.max_tokens else max_tokens
         self.max_iterations = subagent_cfg.max_tool_iterations if subagent_cfg.max_tool_iterations else max_iterations
+
+        # Resolve provider settings from config if provider specified in subagent config
+        self._subagent_provider_name = subagent_cfg.provider
+        self._subagent_api_key: str | None = None
+        self._subagent_api_base: str | None = None
+
+        if subagent_cfg.provider and config:
+            provider_cfg = getattr(config.providers, subagent_cfg.provider, None)
+            if provider_cfg:
+                self._subagent_api_key = provider_cfg.api_key or None
+                self._subagent_api_base = provider_cfg.api_base or None
 
         self.exec_config = exec_config or ExecToolConfig()
         self.restrict_to_workspace = restrict_to_workspace
@@ -137,13 +149,18 @@ class SubagentManager:
 
         logger.info(f"Subagent [{task_id}] starting task: {label}")
 
+        # Determine provider: explicit param > subagent config > main agent
+        effective_provider_name = provider_name or self._subagent_provider_name
+        effective_api_key = api_key or self._subagent_api_key or self.provider.api_key
+        effective_api_base = api_base or self._subagent_api_base or self.provider.api_base
+
         # Create provider if overrides provided, else use main provider
-        if api_base or api_key or provider_name:
+        if effective_provider_name or effective_api_base or effective_api_key:
             provider = LiteLLMProvider(
-                api_key=api_key or self.provider.api_key,
-                api_base=api_base or self.provider.api_base,
+                api_key=effective_api_key,
+                api_base=effective_api_base,
                 default_model=model,
-                provider_name=provider_name,
+                provider_name=effective_provider_name,
             )
         else:
             provider = self.provider

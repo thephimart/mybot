@@ -56,8 +56,9 @@ class AgentLoop:
         session_manager: SessionManager | None = None,
         mcp_servers: dict | None = None,
         subagent_config: "SubagentDefaults | None" = None,
+        config: "Config | None" = None,
     ):
-        from mybot.config.schema import ExecToolConfig, SubagentDefaults, WebToolsConfig
+        from mybot.config.schema import Config, ExecToolConfig, SubagentDefaults, WebToolsConfig
 
         self.bus = bus
         self.provider = provider
@@ -72,6 +73,7 @@ class AgentLoop:
         self.cron_service = cron_service
         self.restrict_to_workspace = restrict_to_workspace
         self.subagent_config = subagent_config or SubagentDefaults()
+        self.config = config
 
         self.context = ContextBuilder(workspace)
         self.sessions = session_manager or SessionManager(workspace)
@@ -87,6 +89,7 @@ class AgentLoop:
             exec_config=self.exec_config,
             restrict_to_workspace=self.restrict_to_workspace,
             subagent_config=self.subagent_config,
+            config=config,
         )
 
         self._running = False
