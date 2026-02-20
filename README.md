@@ -67,8 +67,9 @@ mybot intentionally includes only:
 
 - Agent loop (LLM ↔ tools)
 - Tool execution (file, shell, web search/fetch)
-- Vision support (any vision-enabled model via Telegram, CLI -i)
-- Speech-to-text (STT) via Telegram voice messages or CLI -a (local faster-whisper or Groq)
+- Image support (any vision-enabled model via Telegram  or 'CLI -i "image-file"')
+- Speech-to-text (STT) via Telegram voice messages or 'CLI -a "audio-file"'
+   - (local faster-whisper or Groq)
 - Persistent memory
 - Scheduling / cron
 - Heartbeat (periodic agent wake-up)
