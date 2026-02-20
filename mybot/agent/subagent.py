@@ -19,6 +19,7 @@ from mybot.agent.tools.web import (
 from mybot.bus.events import InboundMessage
 from mybot.bus.queue import MessageBus
 from mybot.providers.base import LLMProvider
+from mybot.providers.registry import find_by_name
 
 
 def get_subagent_settings():
@@ -66,8 +67,13 @@ def get_subagent_settings():
                     "providers"
                 ][provider_name].get("apiKey")
 
-        if api_base and "192.168" in api_base:
-            api_key = api_key or "not-needed"
+        if provider_name:
+            spec = find_by_name(provider_name)
+            is_local = spec.is_local if spec else False
+            if not is_local and not api_key:
+                raise RuntimeError(
+                    f"Subagent provider '{provider_name}' requires a non-empty api_key in config.json"
+                )
 
         logger.info(f"Subagent Settings Resolved: provider={provider_name}, base={api_base}")
         return provider_name, api_base, api_key
