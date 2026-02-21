@@ -254,7 +254,7 @@ def _make_provider(config: Config):
 
 @app.command()
 def gateway(
-    port: int = typer.Option(18790, "--port", "-p", help="Gateway port"),
+    port: int | None = typer.Option(None, "--port", "-p", help="Gateway port"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
 ):
     """Start the mybot gateway."""
@@ -275,6 +275,8 @@ def gateway(
     console.print(f"{__logo__} Starting mybot gateway on port {port}...")
 
     config = load_config()
+    port = port or config.gateway.port
+
     bus = MessageBus()
     provider = _make_provider(config)
     session_manager = SessionManager(config.workspace_path)
