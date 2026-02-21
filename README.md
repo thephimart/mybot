@@ -70,6 +70,8 @@ mybot intentionally includes only:
 - Image support (any vision-enabled model via Telegram  or 'CLI -i "image-file"')
 - Speech-to-text (STT) via Telegram voice messages or 'CLI -a "audio-file"'
    - (local faster-whisper or Groq)
+- Text-to-speech (TTS) via 'speak' tool (local kokoro)
+   - Agent generates audio, sends via message tool with media param
 - Persistent memory
 - Scheduling / cron
 - Heartbeat (periodic agent wake-up)
@@ -212,7 +214,6 @@ If the codebase starts growing without a very good reason, something has gone wr
 
 ## Future integrations (exploring)
 
-- **Local TTS** - Text-to-speech using [kokoro](https://pypi.org/project/kokoro/) (runs locally)
 - **Local image generation** - Image generation using [stable-diffusion-cpp-python](https://pypi.org/project/stable-diffusion-cpp-python/)
 
 Under research/evaluation.

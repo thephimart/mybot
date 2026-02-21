@@ -59,6 +59,18 @@ Voice messages are automatically transcribed using the configured transcriber
 - **Local**: faster-whisper (no API key required)
 - **Cloud**: Groq API (requires API key in groq provider config)
 
+### Outbound Media (Agent → User)
+
+**Text:** Direct text responses.
+
+**Media:** Agent can send audio using the `message` tool with `media` parameter:
+- `.wav` / `.mp3` → sent as audio
+- `.ogg` → sent as voice message
+- `.jpg` / `.png` / `.gif` / `.webp` → sent as photo
+- Other files → sent as document
+
+Use the `speak` tool to generate TTS audio, then send via `message(media=[path])`.
+
 ### Running
 
 ```bash

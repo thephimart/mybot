@@ -76,6 +76,40 @@ Edit file contents (find/replace).
 
 List directory contents.
 
+## Audio Tools
+
+### speak
+
+Generate speech from text using local Kokoro TTS. Requires `tts.enabled: true` in config.
+
+Parameters:
+- `text` (required) - Text to synthesize
+- `voice` - Voice preset (default: af_heart)
+- `lang_code` - Language code (default: b)
+
+Returns: File path to generated WAV audio.
+
+**Usage:**
+```python
+# Generate speech
+path = speak(text="Hello world")
+
+# Send as voice message
+message(content="Here's your message", media=[path])
+```
+
+### transcribe_audio
+
+Transcribe audio files to text.
+
+Parameters:
+- `path` (required) - Path to audio file
+- `language` - Language code (optional)
+
+Supports: .ogg, .wav, .mp3
+
+**Note:** Inbound voice messages are automatically transcribed. This tool is for agent-initiated transcription of audio files.
+
 ---
 
 ## MCP Servers

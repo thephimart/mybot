@@ -163,3 +163,26 @@ Speech-to-text (STT) transcription for voice messages.
 **Providers:**
 - `use_local: true` → faster-whisper (runs locally, no API key)
 - `use_local: false` → Groq API (requires groq provider apiKey)
+
+## tts
+
+Text-to-speech (TTS) using local Kokoro. Generates audio files from text.
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `enabled` | bool | false | Enable TTS tool |
+| `voice` | string | af_heart | Voice preset |
+| `lang_code` | string | b | Language code |
+
+**Example:**
+```json
+{
+  "tts": {
+    "enabled": true,
+    "voice": "af_heart",
+    "lang_code": "b"
+  }
+}
+```
+
+**Usage:** Agent uses `speak` tool to generate audio, then `message` tool with `media` param to send.
