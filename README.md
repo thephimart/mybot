@@ -214,6 +214,8 @@ If the codebase starts growing without a very good reason, something has gone wr
 
 ## Future integrations (exploring)
 
+- **Local LLM multi-instance support** – Allow `.agent` and `.subagent` suffixed local providers (e.g. `llamacpp`, `lmstudio`, other fixed-model OpenAI-compatible servers) to run the main agent and subagent on separate local API endpoints. This enables isolation between agent and subagent workloads when local inference servers are bound to a single loaded model per endpoint (for example `llamacpp.agent` → `http://192.168.1.2:8001/v1`, `llamacpp.subagent` → `http://192.168.1.2:8002/v1`).
+
 - **Local image generation** - Image generation using [stable-diffusion-cpp-python](https://pypi.org/project/stable-diffusion-cpp-python/)
 
 Under research/evaluation.

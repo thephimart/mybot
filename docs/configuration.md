@@ -19,6 +19,13 @@ Full `config.json` schema.
       "temperature": 0.7,
       "max_tool_iterations": 20,
       "memory_window": 50
+    },
+    "subagents": {
+      "model": null,
+      "provider": null,
+      "max_tokens": null,
+      "temperature": null,
+      "max_tool_iterations": null
     }
   },
   "channels": {
@@ -96,17 +103,43 @@ Full `config.json` schema.
 }
 ```
 
-## agents.defaults
+## agents.subagents
+
+Default settings for subagents spawned via the `spawn` tool. All fields are optional — when `null`, the subagent inherits from the main agent.
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| `workspace` | string | ~/.mybot/workspace | Working directory |
-| `model` | string | anthropic/claude-opus-4-5 | LLM model |
-| `provider` | string | auto-detect | Explicit provider |
-| `max_tokens` | int | 8192 | Max response tokens |
-| `temperature` | float | 0.7 | Sampling temperature |
-| `max_tool_iterations` | int | 20 | Max tool calls per message |
-| `memory_window` | int | 50 | Messages in context |
+| `model` | string | inherit | LLM model (e.g., llama3.1) |
+| `provider` | string | inherit | LLM provider |
+| `max_tokens` | int | inherit | Max response tokens |
+| `temperature` | float | inherit | Sampling temperature |
+| `max_tool_iterations` | int | inherit | Max tool calls per message |
+
+**Override at spawn time:** The `spawn` tool accepts `model`, `provider`, `api_base`, and `api_key` parameters to override these defaults per-task.
+
+**Example:**
+```json
+{
+  "agents": {
+    "defaults": {
+      "model": "anthropic/claude-opus-4-5",
+      "provider": "anthropic"
+    },
+    "subagents": {
+      "model": "meta/llama-3.1-70b-instruct",
+      "provider": "ollama",
+      "max_tool_iterations": 10
+    }
+  },
+  "providers": {
+    "ollama": {
+      "apiBase": "http://localhost:11434"
+    }
+  }
+}
+```
+
+**Fallback chain:** explicit spawn params → subagents config → defaults → providers config
 
 ## channels.telegram
 
