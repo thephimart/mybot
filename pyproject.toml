@@ -1,6 +1,6 @@
 [project]
 name = "mybot"
-version = "0.4.0"
+version = "0.4.1.dev"
 description = "A minimal bot core"
 requires-python = ">=3.11"
 license = {text = "MIT"}
