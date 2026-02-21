@@ -136,6 +136,32 @@ spawn(task: str, label: str = null) -> str
 
 The subagent will complete the task and report back when done.
 
+## Audio
+
+### speak
+Generate speech from text using local Kokoro TTS (must be enabled in config).
+Returns a file path to the generated audio.
+```
+speak(text: str, voice: str = null, lang_code: str = null) -> str
+```
+
+**Usage:** Generate audio, then send using the message tool's media parameter.
+```
+# Generate speech
+path = speak(text="Hello world")
+
+# Send as voice message
+message(content="Here's a voice message", media=[path])
+```
+
+### transcribe_audio
+Transcribe an audio file to text.
+```
+transcribe_audio(path: str, language: str = null) -> str
+```
+
+Supports `.ogg`, `.wav`, `.mp3` files.
+
 ## Scheduling
 
 ### cron (CLI)

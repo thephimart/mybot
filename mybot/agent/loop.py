@@ -17,6 +17,8 @@ from mybot.agent.tools.message import MessageTool
 from mybot.agent.tools.registry import ToolRegistry
 from mybot.agent.tools.shell import ExecTool
 from mybot.agent.tools.spawn import SpawnTool
+from mybot.agent.tools.transcribe import TranscribeTool
+from mybot.agent.tools.tts import TTSTool
 from mybot.agent.tools.web import (
     WebFetchTool,
     WebSearchTool,
@@ -58,7 +60,7 @@ class AgentLoop:
         subagent_config: "SubagentDefaults | None" = None,
         config: "Config | None" = None,
     ):
-        from mybot.config.schema import Config, ExecToolConfig, SubagentDefaults, WebToolsConfig
+        from mybot.config.schema import ExecToolConfig, SubagentDefaults, WebToolsConfig
 
         self.bus = bus
         self.provider = provider
@@ -132,6 +134,26 @@ class AgentLoop:
         # Cron tool (for scheduling)
         if self.cron_service:
             self.tools.register(CronTool(self.cron_service))
+
+        # Transcribe tool (always available)
+        if self.config and self.config.transcriber:
+            self.tools.register(
+                TranscribeTool(
+                    use_local=self.config.transcriber.use_local,
+                    whisper_model=self.config.transcriber.whisper_model,
+                    device=self.config.transcriber.device,
+                )
+            )
+
+        # TTS tool (only if enabled in config)
+        if self.config and self.config.tts and self.config.tts.enabled:
+            self.tools.register(
+                TTSTool(
+                    workspace=self.workspace,
+                    voice=self.config.tts.voice,
+                    lang_code=self.config.tts.lang_code,
+                )
+            )
 
     async def _connect_mcp(self) -> None:
         """Connect to configured MCP servers (one-time, lazy)."""

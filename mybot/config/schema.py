@@ -169,6 +169,14 @@ class TranscriberConfig(BaseModel):
     device: str = "cpu"  # cpu, cuda, auto (local only)
 
 
+class TTSConfig(BaseModel):
+    """Text-to-speech configuration."""
+
+    enabled: bool = False  # Enable TTS tool
+    voice: str = "af_heart"  # Voice preset
+    lang_code: str = "b"  # Language code
+
+
 class Config(BaseSettings):
     """Root configuration for mybot."""
 
@@ -178,6 +186,7 @@ class Config(BaseSettings):
     gateway: GatewayConfig = Field(default_factory=GatewayConfig)
     tools: ToolsConfig = Field(default_factory=ToolsConfig)
     transcriber: TranscriberConfig = Field(default_factory=TranscriberConfig)
+    tts: TTSConfig = Field(default_factory=TTSConfig)
 
     @property
     def workspace_path(self) -> Path:
