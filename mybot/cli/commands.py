@@ -39,7 +39,6 @@ def uninstall_completion(
     shell: str | None = typer.Option(None, "--shell", "-s", help="Shell (auto-detected if not set)"),
 ):
     """Uninstall shell completion."""
-    import shutil
 
     shell = shell or _get_shell()
     base_dir = Path.home()
@@ -85,7 +84,7 @@ def uninstall_completion(
         console.print(f"[yellow]Completion script not found: {script_file}[/yellow]")
 
     if removed:
-        console.print(f"[green]✅ Uninstall complete. Restart terminal.[/green]")
+        console.print("[green]✅ Uninstall complete. Restart terminal.[/green]")
     else:
         console.print("[yellow]Nothing to uninstall.[/yellow]")
 
@@ -506,7 +505,7 @@ def agent(
         for img in images:
             if img.startswith(("http://", "https://")):
                 try:
-                    console.print(f"[dim]Downloading image...[/dim]")
+                    console.print("[dim]Downloading image...[/dim]")
                     async with httpx.AsyncClient(timeout=30.0) as client:
                         resp = await client.get(img, follow_redirects=True)
                         resp.raise_for_status()
@@ -555,7 +554,7 @@ def agent(
             for audio_url in audios:
                 if audio_url.startswith(("http://", "https://")):
                     try:
-                        console.print(f"[dim]Downloading audio...[/dim]")
+                        console.print("[dim]Downloading audio...[/dim]")
                         async with httpx.AsyncClient(timeout=60.0) as client:
                             resp = await client.get(audio_url, follow_redirects=True)
                             resp.raise_for_status()

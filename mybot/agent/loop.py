@@ -15,6 +15,7 @@ from mybot.agent.tools.cron import CronTool
 from mybot.agent.tools.filesystem import EditFileTool, ListDirTool, ReadFileTool, WriteFileTool
 from mybot.agent.tools.message import MessageTool
 from mybot.agent.tools.registry import ToolRegistry
+from mybot.agent.tools.restart import RestartTool
 from mybot.agent.tools.shell import ExecTool
 from mybot.agent.tools.spawn import SpawnTool
 from mybot.agent.tools.transcribe import TranscribeTool
@@ -134,6 +135,9 @@ class AgentLoop:
         # Cron tool (for scheduling)
         if self.cron_service:
             self.tools.register(CronTool(self.cron_service))
+
+        # Restart tool (for systemd-managed deployments)
+        self.tools.register(RestartTool())
 
         # Transcribe tool (always available)
         if self.config and self.config.transcriber:

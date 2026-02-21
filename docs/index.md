@@ -25,6 +25,7 @@ Welcome to mybot documentation.
 
 - [Cron](cron.md) - Scheduled tasks
 - [Heartbeat](heartbeat.md) - Periodic agent wake-up
+- [Gateway Restart](restart.md) - Agent-requested restarts via systemd
 
 ## Reference
 
