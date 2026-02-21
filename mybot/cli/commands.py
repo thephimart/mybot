@@ -27,6 +27,69 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 
+
+def _get_shell() -> str:
+    """Detect current shell from $SHELL."""
+    shell_path = os.environ.get("SHELL", "/bin/bash")
+    return Path(shell_path).stem
+
+
+@app.command()
+def uninstall_completion(
+    shell: str | None = typer.Option(None, "--shell", "-s", help="Shell (auto-detected if not set)"),
+):
+    """Uninstall shell completion."""
+    import shutil
+
+    shell = shell or _get_shell()
+    base_dir = Path.home()
+    removed = []
+
+    if shell == "bash":
+        rc_file = base_dir / ".bashrc"
+        script_dir = base_dir / ".bash_completions"
+    elif shell == "zsh":
+        rc_file = base_dir / ".zshrc"
+        script_dir = base_dir / ".bash_completions"  # same dir pattern
+    elif shell == "fish":
+        rc_file = base_dir / ".config" / "fish" / "config.fish"
+        script_dir = base_dir / ".config" / "fish" / "completions"
+    else:
+        console.print(f"[red]Unsupported shell: {shell}[/red]")
+        raise typer.Exit(1)
+
+    # Remove source line from rc file
+    if rc_file.exists():
+        content = rc_file.read_text()
+        source_line = str(script_dir / "mybot.sh")
+        if source_line in content or "mybot.sh" in content:
+            lines = content.splitlines()
+            new_lines = [l for l in lines if "mybot.sh" not in l]
+            rc_file.write_text("\n".join(new_lines) + "\n")
+            removed.append(str(rc_file))
+            console.print(f"[green]Removed source line from {rc_file}[/green]")
+        else:
+            console.print(f"[yellow]No mybot completion source found in {rc_file}[/yellow]")
+
+    # Delete completion script
+    if shell in ("bash", "zsh"):
+        script_file = base_dir / ".bash_completions" / "mybot.sh"
+    else:  # fish
+        script_file = base_dir / ".config" / "fish" / "completions" / "mybot.fish"
+
+    if script_file.exists():
+        script_file.unlink()
+        removed.append(str(script_file))
+        console.print(f"[green]Deleted {script_file}[/green]")
+    else:
+        console.print(f"[yellow]Completion script not found: {script_file}[/yellow]")
+
+    if removed:
+        console.print(f"[green]✅ Uninstall complete. Restart terminal.[/green]")
+    else:
+        console.print("[yellow]Nothing to uninstall.[/yellow]")
+
+
 console = Console()
 EXIT_COMMANDS = {"exit", "quit", "/exit", "/quit", ":q"}
 
