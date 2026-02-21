@@ -228,13 +228,27 @@ class TelegramChannel(BaseChannel):
             logger.error(f"Invalid chat_id: {msg.chat_id}")
             return
 
+        # Handle structured artifacts (dict with type=artifact)
+        if isinstance(msg.content, dict) and msg.content.get("type") == "artifact":
+            kind = msg.content.get("kind")
+            path = msg.content.get("path")
+            caption = msg.content.get("caption", "")
+
+            if path:
+                await self._send_media(chat_id, caption, [path])
+                return
+            else:
+                logger.warning(f"Artifact received but no path provided: {msg.content}")
+                return
+
         # Handle media files
         if msg.media:
             await self._send_media(chat_id, msg.content, msg.media)
             return
 
         # Text-only messages
-        for chunk in _split_message(msg.content):
+        text_content = str(msg.content) if msg.content else ""
+        for chunk in _split_message(text_content):
             try:
                 html = _markdown_to_telegram_html(chunk)
                 await self._app.bot.send_message(chat_id=chat_id, text=html, parse_mode="HTML")
