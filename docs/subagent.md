@@ -1,45 +1,44 @@
-# Subagents
+# Subagent Configuration
 
-Subagents are background tasks spawned by the main agent to handle complex or time-consuming work independently. They complete their task and report back when done.
+Configure subagent defaults in `agents.subagents`. When all values are `null`, subagents inherit from the main agent.
 
-## When to Use Subagents
+## Settings
 
-- Long-running operations that would block the main agent
-- Parallel independent tasks
-- Background research or file processing
-- Any task that doesn't need immediate user feedback
-
-## How Subagents Work
-
-The main agent uses the `spawn` tool to create a subagent:
-
+```json
+{
+  "agents": {
+    "subagents": {
+      "model": null,
+      "provider": null,
+      "max_tokens": null,
+      "temperature": null,
+      "max_tool_iterations": null
+    }
+  }
+}
 ```
-spawn(task="search for...", label="research")
-```
 
-The subagent:
-1. Runs independently in the background
-2. Has its own conversation context
-3. Uses tools just like the main agent
-4. Reports back when complete
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `model` | string | inherit | LLM model, null = inherit from main agent |
+| `provider` | string | inherit | LLM provider, null = inherit from main agent |
+| `max_tokens` | int | inherit | Max tokens, null = inherit (8192) |
+| `temperature` | float | inherit | Randomness, null = inherit (0.7) |
+| `max_tool_iterations` | int | inherit | Max tool calls, null = inherit (20) |
 
-## Configuration
+## Inheritance
 
-### Default Behavior (All Null)
+When `agents.subagents` is empty or all values are `null`, subagents use the main agent's settings:
 
-When all `agents.subagents` values are `null` (or not set), subagents **inherit from the main agent**:
+| Setting | Main Agent Default |
+|---------|-------------------|
+| model | anthropic/claude-opus-4-5 |
+| provider | null (auto-detect) |
+| max_tokens | 8192 |
+| temperature | 0.7 |
+| max_tool_iterations | 20 |
 
-| Setting | Subagent Inherits From |
-|---------|----------------------|
-| `model` | Main agent's model |
-| `provider` | Main agent's provider |
-| `max_tokens` | Main agent's max_tokens (8192) |
-| `temperature` | Main agent's temperature (0.7) |
-| `max_tool_iterations` | Main agent's max_tool_iterations (20) |
-
-### Setting Subagent Defaults
-
-To give subagents their own defaults, configure `agents.subagents` in config.json:
+## Example: Different Model for Subagents
 
 ```json
 {
@@ -48,105 +47,21 @@ To give subagents their own defaults, configure `agents.subagents` in config.jso
       "model": "anthropic/claude-opus-4-5"
     },
     "subagents": {
-      "model": "meta/llama-3.1-70b-instruct",
-      "provider": "ollama",
-      "max_tool_iterations": 10
-    }
-  }
-}
-```
-
-### Override at Spawn Time
-
-You can override settings per-task when spawning:
-
-```
-spawn(task="analyze this file", model="llama3.1", provider="ollama")
-```
-
-Available overrides:
-- `model` — LLM model (e.g., 'llama3.1')
-- `provider` — LLM provider (e.g., 'ollama', 'llamacpp')
-- `api_base` — API base URL (e.g., 'http://localhost:11434/v1')
-- `api_key` — API key override
-
-## Setting Resolution Order
-
-Settings are resolved in this priority order:
-
-1. **Explicit spawn parameters** — Values passed directly to `spawn()` call
-2. **Subagents config** — `agents.subagents` in config.json
-3. **Main agent defaults** — `agents.defaults` in config.json
-4. **Hardcoded defaults** — Model/temperature/max_tokens built-in values
-
-For example, a subagent's model is resolved as:
-```
-spawn.model → config.agents.subagents.model → config.agents.defaults.model → provider default
-```
-
-## Provider Resolution
-
-Subagents use LiteLLM to support multiple providers. The provider is resolved as:
-
-1. Explicit `provider` param in spawn call
-2. `agents.subagents.provider` in config.json
-3. Auto-detected from model name (if model is an OpenAI-compatible model string)
-
-If using a local provider (ollama, llamacpp, etc.) without explicit api_base:
-- Checks `agents.subagents` for api_base
-- Falls back to `providers.<provider>.apiBase`
-- Raises error if api_base is required but not found
-
-## Example Configurations
-
-### Minimal (Inherit Everything)
-
-```json
-{
-  "agents": {}
-}
-```
-
-Subagents use the same model and provider as the main agent.
-
-### Subagent with Different Model
-
-```json
-{
-  "agents": {
-    "subagents": {
-      "model": "meta/llama-3.1-70b-instruct",
+      "model": "llama3.1",
       "provider": "ollama"
     }
-  },
-  "providers": {
-    "ollama": {
-      "apiBase": "http://localhost:11434"
-    }
   }
 }
 ```
 
-### Per-Task Override
+## Override at Spawn Time
 
-No config change needed — just pass parameters to spawn:
+Pass parameters directly to the spawn tool:
 
 ```
-spawn(task="run this analysis", model="qwen2.5-coder", api_base="http://localhost:8080/v1")
+spawn(task="analyze this", model="qwen2.5", provider="ollama", api_base="http://localhost:8080/v1")
 ```
 
-## Tools Available to Subagents
+Available overrides: `model`, `provider`, `api_base`, `api_key`
 
-Subagents have most tools available to the main agent:
-- File tools (read, write, edit, list)
-- Shell execution
-- Web tools (fetch, search)
-- TTS (if configured)
-
-Subagents **cannot**:
-- Spawn other subagents (no spawn tool)
-- Send messages to channels (no message tool)
-
-## Deletion
-
-If you don't want subagent capability, simply delete `mybot/agent/tools/spawn.py`.
+See [Workspace](workspace.md) for memory files.
