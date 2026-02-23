@@ -42,7 +42,7 @@ sudo loginctl enable-linger <user>
 ```
 
 After this:
-- User services start at boot
+- User services start at boot and persist across reboots
 - No further sudo access is required
 - RestartTool can restart the gateway remotely
 
