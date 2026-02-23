@@ -18,7 +18,7 @@ class RestartTool(Tool):
 
     @property
     def description(self) -> str:
-        return f"Request gateway restart via {self._service_name}. Requires systemd."
+        return f"Request gateway restart via systemd --user for {self._service_name}."
 
     @property
     def parameters(self) -> dict[str, Any]:
@@ -32,6 +32,7 @@ class RestartTool(Tool):
         try:
             process = await asyncio.create_subprocess_exec(
                 "systemctl",
+                "--user",
                 "restart",
                 self._service_name,
                 stdout=asyncio.subprocess.PIPE,
@@ -47,6 +48,6 @@ class RestartTool(Tool):
         except asyncio.TimeoutError:
             return "Restart command timed out"
         except FileNotFoundError:
-            return "systemd not found. External supervision required."
+            return "systemctl not found. Requires systemd user service."
         except Exception as e:
             return f"Error: {str(e)}"
