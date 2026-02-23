@@ -37,16 +37,17 @@ After=network.target
 
 [Service]
 Type=simple
-User=phil
-WorkingDirectory=/home/phil/opencode/mybot
-ExecStart=/home/phil/.local/bin/mybot gateway
+User=user
+WorkingDirectory=<absolute-path-to-mybot>
+ExecStart=<absolute-path-to-mybot>/.venv/bin/mybot gateway
 Restart=always
 RestartSec=10
-Environment=PATH=/home/phil/.local/bin:/usr/local/bin
 
 [Install]
 WantedBy=multi-user.target
 ```
+
+- `<absolute-path-to-mybot>` — replace with the absolute path to your mybot folder (e.g., `/home/user/mybot`). This example assumes you installed mybot in a `.venv` within the mybot folder. If you installed elsewhere, adjust the path to your mybot binary accordingly.
 
 Then:
 ```bash
