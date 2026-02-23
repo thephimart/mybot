@@ -1,6 +1,10 @@
 # Subagent Configuration
 
-Configure subagent defaults in `agents.subagents`. When all values are `null`, subagents inherit from the main agent.
+**Subagents are lightweight helper agents used for long-running, tool-heavy, or token-intensive tasks.**  
+They allow the main agent to remain responsive and conserve context.
+
+Configure subagent defaults in `agents.subagents`.  
+When all values are `null`, subagents inherit from the main agent.
 
 ## Settings
 
@@ -26,17 +30,32 @@ Configure subagent defaults in `agents.subagents`. When all values are `null`, s
 | `temperature` | float | inherit | Randomness, null = inherit (0.7) |
 | `max_tool_iterations` | int | inherit | Max tool calls, null = inherit (20) |
 
-## Inheritance
+## Configuration Inheritance & Spawn Resolution
 
-When `agents.subagents` is empty or all values are `null`, subagents use the main agent's settings:
+Agent configuration is resolved **at spawn time** and is **stateless**.
 
-| Setting | Main Agent Default |
-|---------|-------------------|
-| model | anthropic/claude-opus-4-5 |
-| provider | null (auto-detect) |
-| max_tokens | 8192 |
-| temperature | 0.7 |
-| max_tool_iterations | 20 |
+When a subagent is spawned, its configuration is constructed in the following order:
+
+1. **Spawn-time arguments** (when used)
+2. **Subagent configuration** from `config.json`
+3. **Main agent defaults** from `config.json`
+
+Later sources only apply when earlier values are unset (`null`).
+
+Subagents do not persist configuration state.  
+Any change to `config.json` affects the next spawned subagent automatically.
+
+### Default Inheritance Behavior
+
+If `agents.subagents` is empty or all values are `null`, subagents inherit the main agent’s defaults:
+
+| Setting | Default |
+|--------|---------|
+| `model` | `anthropic/claude-opus-4-5` |
+| `provider` | `null` (auto-detect) |
+| `max_tokens` | `8192` |
+| `temperature` | `0.7` |
+| `max_tool_iterations` | `20` |
 
 ## Example: Different Model for Subagents
 
@@ -44,7 +63,8 @@ When `agents.subagents` is empty or all values are `null`, subagents use the mai
 {
   "agents": {
     "defaults": {
-      "model": "anthropic/claude-opus-4-5"
+      "model": "anthropic/claude-opus-4-5",
+      "provider": "anthropic"
     },
     "subagents": {
       "model": "llama3.1",
@@ -53,15 +73,3 @@ When `agents.subagents` is empty or all values are `null`, subagents use the mai
   }
 }
 ```
-
-## Override at Spawn Time
-
-Pass parameters directly to the spawn tool:
-
-```
-spawn(task="analyze this", model="qwen2.5", provider="ollama", api_base="http://localhost:8080/v1")
-```
-
-Available overrides: `model`, `provider`, `api_base`, `api_key`
-
-See [Workspace](workspace.md) for memory files.

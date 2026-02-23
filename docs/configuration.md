@@ -105,7 +105,12 @@ Full `config.json` schema.
 
 ## agents.subagents
 
-Default settings for subagents spawned via the `spawn` tool. All fields are optional — when `null`, the subagent inherits from the main agent.
+Default settings for subagents spawned via the `spawn` tool.
+
+Subagents are **stateless**.  
+Their configuration is **resolved at spawn time** from `config.json` and is **not persisted**.
+
+All fields are optional — when `null`, the value is inherited from the main agent.
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
@@ -115,9 +120,21 @@ Default settings for subagents spawned via the `spawn` tool. All fields are opti
 | `temperature` | float | inherit | Sampling temperature |
 | `max_tool_iterations` | int | inherit | Max tool calls per message |
 
-**Override at spawn time:** The `spawn` tool accepts `model`, `provider`, `api_base`, and `api_key` parameters to override these defaults per-task.
+### Configuration Resolution Order
 
-**Example:**
+When a subagent is spawned, its configuration is constructed in the following order:
+
+1. **Spawn-time arguments** (if provided)
+2. **`agents.subagents`** from `config.json`
+3. **`agents.defaults`** from `config.json`
+
+Later sources apply only when earlier values are `null`.
+
+Subagents do **not** store configuration state.  
+Any change to `config.json` affects the **next spawned subagent** automatically.
+
+### Example
+
 ```json
 {
   "agents": {
@@ -138,8 +155,6 @@ Default settings for subagents spawned via the `spawn` tool. All fields are opti
   }
 }
 ```
-
-**Fallback chain:** explicit spawn params → subagents config → defaults → providers config
 
 ## channels.telegram
 
