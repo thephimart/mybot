@@ -14,21 +14,51 @@ restart()
 
 Returns success if systemd processed the request.
 
+The restart tool executes:
+```
+systemctl --user restart mybot
+```
+
+This works when mybot is installed as a systemd *user service* with lingering enabled.
+
 ⚠️ **Security note**
 
-The restart tool executes a privileged system command (`systemctl restart mybot`).
-Only enable it in trusted deployments.
+RestartTool does not require sudo and cannot manage arbitrary system services.
+It is limited to the user's own systemd service.
+
+This is the recommended and safest deployment model.
 
 If you don't want restart capability, simply delete `mybot/agent/tools/restart.py`.
 
+## One-time setup: enable lingering
+
+To allow mybot to start at boot and restart itself without sudo, enable lingering
+for the user account running mybot.
+
+This command is required once:
+
+```bash
+sudo loginctl enable-linger <user>
+```
+
+After this:
+- User services start at boot
+- No further sudo access is required
+- RestartTool can restart the gateway remotely
+
 ## Requirements
 
-1. **mybot must run as a systemd service**
-2. **Service name must be `mybot`** (or configured in RestartTool)
+- mybot runs as a systemd *user service*
+- Lingering is enabled for the user (one-time sudo step)
+- Service name matches RestartTool configuration
 
-## Setup: systemd service
+## Setup: systemd user service
 
-Create `/etc/systemd/system/mybot.service`:
+Create the user service file:
+
+```
+~/.config/systemd/user/mybot.service
+```
 
 ```ini
 [Unit]
@@ -37,28 +67,29 @@ After=network.target
 
 [Service]
 Type=simple
-User=user
 WorkingDirectory=<absolute-path-to-mybot>
 ExecStart=<absolute-path-to-mybot>/.venv/bin/mybot gateway
 Restart=always
 RestartSec=10
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target
 ```
+
+⚠️ Do not include `User=` in user services
 
 - `<absolute-path-to-mybot>` — replace with the absolute path to your mybot folder (e.g., `/home/user/mybot`). This example assumes you installed mybot in a `.venv` within the mybot folder. If you installed elsewhere, adjust the path to your mybot binary accordingly.
 
 Then:
 ```bash
-sudo systemctl daemon-reload
-sudo systemctl enable --now mybot
+systemctl --user daemon-reload
+systemctl --user enable --now mybot
 ```
 
 ## Viewing logs
 
 ```bash
-journalctl -u mybot -f
+journalctl --user -u mybot -f
 ```
 
 ## Why external supervision?
@@ -69,7 +100,7 @@ journalctl -u mybot -f
 - Log management ✓
 - Survives kernel hiccups ✓
 
-RestartTool is inert without systemd. The agent can request; systemd decides.
+RestartTool requires a systemd user service to function.
 
 ---
 
