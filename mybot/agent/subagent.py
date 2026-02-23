@@ -104,28 +104,37 @@ class SubagentManager:
         exec_config: "ExecToolConfig | None" = None,
         restrict_to_workspace: bool = False,
         subagent_config: "SubagentDefaults | None" = None,
+        agent_defaults: "AgentDefaults | None" = None,
     ):
-        from mybot.config.schema import ExecToolConfig, SubagentDefaults
+        from mybot.config.schema import AgentDefaults, ExecToolConfig, SubagentDefaults
 
         self.provider = provider
         self.workspace = workspace
         self.bus = bus
 
-        # Resolve settings: subagent config overrides, else use main agent values
+        agent_cfg = agent_defaults or AgentDefaults()
+
         subagent_cfg = subagent_config or SubagentDefaults()
-        self.model = (
-            subagent_cfg.model if subagent_cfg.model else (model or provider.get_default_model())
-        )
+
+        self.model = subagent_cfg.model if subagent_cfg.model else (model or agent_cfg.model)
         self.temperature = (
-            subagent_cfg.temperature if subagent_cfg.temperature is not None else temperature
+            subagent_cfg.temperature
+            if subagent_cfg.temperature is not None
+            else (temperature or agent_cfg.temperature)
         )
-        self.max_tokens = subagent_cfg.max_tokens if subagent_cfg.max_tokens else max_tokens
+        self.max_tokens = (
+            subagent_cfg.max_tokens
+            if subagent_cfg.max_tokens
+            else (max_tokens or agent_cfg.max_tokens)
+        )
         self.max_iterations = (
-            subagent_cfg.max_tool_iterations if subagent_cfg.max_tool_iterations else max_iterations
+            subagent_cfg.max_tool_iterations
+            if subagent_cfg.max_tool_iterations
+            else (max_iterations or agent_cfg.max_tool_iterations)
         )
 
         # Provider settings resolved at runtime via get_subagent_settings()
-        self._subagent_provider_name = subagent_cfg.provider
+        self._subagent_provider_name = subagent_cfg.provider or agent_cfg.provider
 
         self.exec_config = exec_config or ExecToolConfig()
         self.restrict_to_workspace = restrict_to_workspace

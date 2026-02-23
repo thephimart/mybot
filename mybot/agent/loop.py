@@ -78,6 +78,7 @@ class AgentLoop:
         self.subagent_config = subagent_config or (
             config.agents.subagents if config and config.agents.subagents else SubagentDefaults()
         )
+        self.agent_defaults = config.agents.defaults if config and config.agents else None
         self.config = config
 
         self.context = ContextBuilder(workspace)
@@ -94,6 +95,7 @@ class AgentLoop:
             exec_config=self.exec_config,
             restrict_to_workspace=self.restrict_to_workspace,
             subagent_config=self.subagent_config,
+            agent_defaults=self.agent_defaults,
         )
 
         self._running = False
