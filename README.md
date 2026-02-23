@@ -69,9 +69,11 @@ mybot intentionally includes only:
 - Tool execution (file, shell, web search/fetch)
 - Image support (any vision-enabled model via Telegram  or 'CLI -i "image-file"')
 - Speech-to-text (STT) via Telegram voice messages or 'CLI -a "audio-file"'
-   - (local faster-whisper or Groq)
+  - (local faster-whisper or Groq)
 - Text-to-speech (TTS) via 'speak' tool (local kokoro)
-   - Agent generates audio, sends via message tool with media param
+  - Agent generates audio, sends via message tool with media param
+- Subagent with independent configuration
+  - Used to offload long-running or token-heavy work from the main agent loop
 - Persistent memory
 - Scheduling / cron
 - Heartbeat (periodic agent wake-up)
@@ -79,6 +81,10 @@ mybot intentionally includes only:
   - Telegram
   - Email
 - CLI for local operation
+- Subagent with independent configuration
+  - Used to offload long-running or token-heavy work from the main agent loop
+- Optional systemd user service mode enabling remotely self-improving, skill-building agents.
+  - [Systemd User Service](docs/restart.md)
 
 Nothing else is considered "core".
 
@@ -94,6 +100,7 @@ The "gateway" is a **channel-driven runtime**, not a REST server. It coordinates
 - heartbeat
 - memory
 - enabled I/O channels (CLI, Telegram, Email)
+- Optional systemd user service mode remote restart
 
 If no channel binds an external interface, no network port will be open.
 This is intentional.
@@ -172,19 +179,7 @@ mybot agent -m "Hello!"
 
 ## Documentation
 
-- [Installation](docs/installation.md) - Setup and installation
-- [Quick Start](docs/quickstart.md) - First-time setup guide
-- [Configuration](docs/configuration.md) - Full config reference
-- [Providers](docs/providers.md) - LLM provider setup (18 providers)
-- [Channels](docs/channels.md) - Telegram and Email
-- [CLI](docs/cli.md) - Command reference
-- [Workspace](docs/workspace.md) - Bootstrap files (AGENTS.md, SOUL.md, etc.)
-- [Skills](docs/skills.md) - Extending agent capabilities
-- [Tools](docs/tools.md) - Tool configuration
-- [Cron](docs/cron.md) - Scheduled tasks
-- [Heartbeat](docs/heartbeat.md) - Periodic agent wake-up
-- [Security](docs/security.md) - Security best practices
-- [Parameters](docs/parameters.md) - LLM parameters
+- [Documentation Index](docs/index.md) - Overview and navigation
 
 ---
 
@@ -206,9 +201,35 @@ without special casing.
 
 ## Line count
 
-mybot is intentionally small.
+**mybot is intentionally small.**
 
-If the codebase starts growing without a very good reason, something has gone wrong.
+A compact codebase is a design goal: if the line count grows without a very good reason, something has gone wrong.  
+Most complexity is pushed into **skills**, **configuration**, and **external providers**, not the core agent loop.
+
+**Current core line count (v0.4.1):**
+```
+agent/      1451
+tools/      1274
+bus/        122
+config/     374
+cron/       429
+heartbeat/  135
+session/    207
+utils/      85
+(root)      14
+
+Core total: 4091
+```
+> Excludes optional integrations: `channels/`, `cli/`, `providers/`
+
+**Why this matters**
+
+- Smaller surface area → easier reasoning and auditing  
+- Fewer hidden side effects in the core loop  
+- Faster onboarding for contributors  
+- Safer self-modifying and skill-building behavior  
+
+If this number starts climbing without a clear architectural justification, it’s a signal to stop and refactor.
 
 ---
 

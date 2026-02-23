@@ -16,6 +16,10 @@ Creates `~/.mybot/config.json` and `~/.mybot/workspace/` with template files.
 
 Interact with agent directly.
 
+The CLI supports text, image, and audio inputs in a single invocation.
+
+If no options are provided, the agent starts in interactive mode.
+
 ```bash
 # Send single message
 mybot agent -m "Hello!"
@@ -28,19 +32,22 @@ mybot agent -i /path/to/image.jpg
 
 # With audio
 mybot agent -a /path/to/audio.mp3
+
+# Message with Image
+mybot agent -m "Describe this image." -i /path/to/image.jpg
 ```
 
 Options:
 - `-m, --message TEXT` - Message to send
 - `-s, --session TEXT` - Session ID (default: cli:direct)
-- `-i, --image PATH` - Image file path (can repeat)
-- `-a, --audio PATH` - Audio file path (can repeat)
+- `-i, --image PATH` - Image file path (repeatable)
+- `-a, --audio PATH` - Audio file path (repeatable)
 - `--markdown/--no-markdown` - Render markdown (default: true)
 - `--logs/--no-logs` - Show runtime logs (default: false)
 
 ### mybot gateway
 
-Start as persistent service with channels, cron, and heartbeat.
+Start the agent as a persistent service with channels, cron, and heartbeat enabled.
 
 ```bash
 mybot gateway                    # Default port 18790
@@ -50,7 +57,7 @@ mybot gateway -v                 # Verbose output
 
 ### mybot status
 
-Show current configuration status.
+Show current configuration and runtime status.
 
 ```bash
 mybot status

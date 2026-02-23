@@ -22,5 +22,5 @@ Thumbs.db
 *.deb
 
 # Project-specific
-/dev_tasks.md
 /AGENTS.md
+/dev_tasks.md

@@ -14,6 +14,7 @@ Welcome to mybot documentation.
 - [Providers](providers.md) - LLM providers (OpenAI, Claude, Ollama, etc.)
 - [Channels](channels.md) - Telegram and Email setup
 - [Agent Settings](agent.md) - Model, temperature, memory
+- [Subagents](subagent.md) - Background task spawning
 
 ## Customization
 
@@ -25,6 +26,7 @@ Welcome to mybot documentation.
 
 - [Cron](cron.md) - Scheduled tasks
 - [Heartbeat](heartbeat.md) - Periodic agent wake-up
+- [Gateway Restart](restart.md) - Agent-requested restarts via systemd
 
 ## Reference
 
