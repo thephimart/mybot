@@ -1,5 +1,7 @@
 # mybot
 
+![Logo](mybot_logo.png "mybot")
+
 **mybot** is a minimal, pure-Python bot core.
 
 It provides only the fundamentals required to run an autonomous agent:
